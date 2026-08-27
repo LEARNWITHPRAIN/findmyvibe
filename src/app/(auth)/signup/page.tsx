@@ -23,7 +23,7 @@ export default function SignUpPage() {
     setError(null);
 
     if (!email || !password) {
-      setError('Please enter your CSJMU email and a password.');
+      setError('Please enter your email and a password.');
       return;
     }
 
@@ -66,7 +66,7 @@ export default function SignUpPage() {
             Join Find My Vibe
           </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            Exclusively for CSJMU Kanpur students
+            Open to all CSJMU students — sign up with any email
           </p>
         </div>
 
@@ -77,7 +77,7 @@ export default function SignUpPage() {
             </div>
             <h2 className="text-lg font-bold text-white">Check Your Inbox!</h2>
             <p className="text-xs text-zinc-400 leading-relaxed max-w-xs mx-auto">
-              We have sent a verification link to <strong className="text-zinc-200">{email}</strong>. Click it to confirm your student email.
+              We&apos;ve sent a verification link to <strong className="text-zinc-200">{email}</strong>. Click it to confirm your account.
             </p>
 
             <div className="pt-4 border-t border-zinc-800 space-y-2">
@@ -88,9 +88,6 @@ export default function SignUpPage() {
                 <span>Continue to Profile Setup</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
-              <p className="text-[11px] text-zinc-500">
-                (Demo bypass: Proceed directly to onboarding)
-              </p>
             </div>
           </div>
         ) : (
@@ -104,7 +101,7 @@ export default function SignUpPage() {
 
             <div>
               <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-                CSJMU Student Email
+                Email
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -112,7 +109,7 @@ export default function SignUpPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. rollno.branch@csjmu.ac.in"
+                  placeholder="your@email.com"
                   className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors"
                   required
                 />
@@ -158,7 +155,7 @@ export default function SignUpPage() {
               disabled={loading}
               className="w-full py-3 mt-2 rounded-xl bg-gradient-to-r from-purple-600 via-rose-500 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-bold text-sm shadow-glow-purple transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
-              {loading ? 'Creating Account...' : 'Sign Up'}
+              {loading ? 'Creating Account…' : 'Create My Account'}
               <ArrowRight className="w-4 h-4" />
             </button>
 

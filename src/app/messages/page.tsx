@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import {
   MessageSquare,
@@ -15,16 +15,24 @@ import {
 } from 'lucide-react';
 
 function MessagesContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get('user');
 
-  const { currentUser, profiles, messages, sendMessage } = useAuth();
+  const { currentUser, profiles, messages, sendMessage, isLoading } = useAuth();
 
   const [activePartnerId, setActivePartnerId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [searchFilter, setSearchFilter] = useState('');
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auth guard
+  useEffect(() => {
+    if (!isLoading && !currentUser) {
+      router.push('/login');
+    }
+  }, [currentUser, isLoading, router]);
 
   const isVerified = currentUser?.verification_status === 'verified';
 

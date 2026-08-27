@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Profile } from '@/lib/types';
 import { useAuth } from '@/lib/authContext';
 import { HobbyBadge } from './HobbyBadge';
-import { ShieldCheck, Lock, MessageSquare, ArrowUpRight, GraduationCap, MapPin } from 'lucide-react';
+import { ShieldCheck, Lock, MessageSquare, ArrowUpRight, GraduationCap, MapPin, Clock } from 'lucide-react';
 
 interface StudentCardProps {
   profile: Profile;
@@ -55,7 +55,7 @@ export function StudentCard({ profile }: StudentCardProps) {
 
             {/* Name and Basic Info */}
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Link
                   href={`/profile/${profile.id}`}
                   className="font-bold text-zinc-100 hover:text-purple-400 text-base truncate transition-colors flex items-center gap-1"
@@ -64,8 +64,18 @@ export function StudentCard({ profile }: StudentCardProps) {
                   <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400" />
                 </Link>
                 {profile.verification_status === 'verified' && (
-                  <span className="bg-teal-500/10 border border-teal-500/30 text-teal-400 text-[10px] font-semibold px-2 py-0.5 rounded-full hidden sm:inline-flex items-center gap-1">
+                  <span className="bg-teal-500/10 border border-teal-500/30 text-teal-400 text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3" /> Verified
+                  </span>
+                )}
+                {(profile.verification_status === 'unverified' || profile.verification_status === 'rejected') && (
+                  <span className="bg-zinc-800 border border-zinc-700 text-zinc-500 text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-amber-500" /> Unverified
+                  </span>
+                )}
+                {profile.verification_status === 'pending' && (
+                  <span className="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> Pending
                   </span>
                 )}
               </div>

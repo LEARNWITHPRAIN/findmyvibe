@@ -13,18 +13,18 @@ import {
   LogOut,
   Menu,
   X,
-  Sliders,
-  ChevronDown,
   Layers,
 } from 'lucide-react';
 
+const ADMIN_EMAIL = 'prakharjain2731@gmail.com';
+
 export default function Navbar() {
   const pathname = usePathname();
-  const { currentUser, logout, switchDemoRole } = useAuth();
+  const { currentUser, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [demoDropdownOpen, setDemoDropdownOpen] = useState(false);
 
   const isActive = (path: string) => pathname === path;
+  const isAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl">
@@ -45,9 +45,6 @@ export default function Navbar() {
               <div className="flex flex-col">
                 <span className="text-base sm:text-lg font-black tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent group-hover:from-purple-300 group-hover:to-teal-300 transition-all">
                   Find My Vibe
-                </span>
-                <span className="text-[9px] uppercase tracking-widest text-teal-400 font-bold -mt-1">
-                  CSJMU Kanpur
                 </span>
               </div>
             </Link>
@@ -87,97 +84,45 @@ export default function Navbar() {
                   : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
               }`}
             >
-              <ShieldCheck className="w-4 h-4 text-coral-500" />
+              <ShieldCheck className="w-4 h-4 text-teal-400" />
               ID Verification
             </Link>
 
-            <Link
-              href="/admin/verifications"
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                isActive('/admin/verifications')
-                  ? 'bg-purple-950/60 border border-purple-500/50 text-purple-300'
-                  : 'text-zinc-500 hover:text-purple-400 hover:bg-purple-950/20'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              Admin Review
-            </Link>
+            {/* Admin link — only for the admin account */}
+            {isAdmin && (
+              <Link
+                href="/admin/verifications"
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  isActive('/admin/verifications')
+                    ? 'bg-purple-950/60 border border-purple-500/50 text-purple-300'
+                    : 'text-zinc-500 hover:text-purple-400 hover:bg-purple-950/20'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                Admin Review
+              </Link>
+            )}
           </nav>
 
-          {/* Right Action & User Controls */}
+          {/* Right: User Controls */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Quick Role Switcher */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setDemoDropdownOpen(!demoDropdownOpen)}
-                className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 flex items-center gap-1.5 transition-colors"
-                title="Switch test persona to preview verified vs unverified features"
-              >
-                <Sliders className="w-3 h-3 text-purple-400" />
-                <span>Mode: <strong className="text-zinc-200 capitalize">{currentUser?.verification_status || 'Guest'}</strong></span>
-                <ChevronDown className="w-3 h-3" />
-              </button>
-
-              {demoDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-52 bg-zinc-900 border border-zinc-800 rounded-xl p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95">
-                  <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                    Switch Test Persona
-                  </div>
-                  <button
-                    onClick={() => {
-                      switchDemoRole('unverified');
-                      setDemoDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-zinc-300 hover:bg-zinc-800 flex items-center justify-between"
-                  >
-                    <span>Unverified Student</span>
-                    <span className="text-[10px] text-rose-400 font-mono">Restricted</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      switchDemoRole('pending');
-                      setDemoDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-zinc-300 hover:bg-zinc-800 flex items-center justify-between"
-                  >
-                    <span>Pending Verification</span>
-                    <span className="text-[10px] text-amber-400 font-mono">In Review</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      switchDemoRole('verified');
-                      setDemoDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-zinc-300 hover:bg-zinc-800 flex items-center justify-between"
-                  >
-                    <span>Verified Student</span>
-                    <span className="text-[10px] text-teal-400 font-mono">Full Access</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      switchDemoRole('admin');
-                      setDemoDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-zinc-300 hover:bg-zinc-800 flex items-center justify-between"
-                  >
-                    <span>Admin Proctor</span>
-                    <span className="text-[10px] text-purple-400 font-mono">Approve IDs</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
             {currentUser ? (
               <div className="flex items-center gap-2">
                 <Link
                   href="/me"
                   className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs font-semibold text-zinc-200 transition-colors"
                 >
-                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-teal-400 text-zinc-950 flex items-center justify-center font-bold text-xs">
-                    {currentUser.full_name?.charAt(0) || 'U'}
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-teal-400 text-zinc-950 flex items-center justify-center font-bold text-xs overflow-hidden">
+                    {currentUser.avatar_url ? (
+                      <Image src={currentUser.avatar_url} alt={currentUser.full_name} width={24} height={24} className="object-cover w-full h-full" unoptimized />
+                    ) : (
+                      currentUser.full_name?.charAt(0) || 'U'
+                    )}
                   </div>
                   <span className="max-w-[100px] truncate">{currentUser.full_name}</span>
+                  {currentUser.verification_status === 'verified' && (
+                    <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+                  )}
                 </Link>
 
                 <button
@@ -220,11 +165,13 @@ export default function Navbar() {
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-zinc-800 bg-zinc-950 px-4 pt-3 pb-5 space-y-2">
+        <div className="md:hidden border-t border-zinc-800 bg-zinc-950 px-4 pt-3 pb-5 space-y-1">
           <Link
             href="/discover"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-200 hover:bg-zinc-900"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              isActive('/discover') ? 'bg-zinc-800 text-white' : 'text-zinc-200 hover:bg-zinc-900'
+            }`}
           >
             <Compass className="w-4 h-4 text-purple-400" />
             Discover Students
@@ -232,7 +179,9 @@ export default function Navbar() {
           <Link
             href="/messages"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-200 hover:bg-zinc-900"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              isActive('/messages') ? 'bg-zinc-800 text-white' : 'text-zinc-200 hover:bg-zinc-900'
+            }`}
           >
             <MessageSquare className="w-4 h-4 text-teal-400" />
             Messages
@@ -240,42 +189,69 @@ export default function Navbar() {
           <Link
             href="/verify-id"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-200 hover:bg-zinc-900"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              isActive('/verify-id') ? 'bg-zinc-800 text-white' : 'text-zinc-200 hover:bg-zinc-900'
+            }`}
           >
-            <ShieldCheck className="w-4 h-4 text-coral-500" />
-            Verify CSJMU ID
-          </Link>
-          <Link
-            href="/admin/verifications"
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-purple-300 hover:bg-purple-950/40"
-          >
-            <Layers className="w-4 h-4 text-purple-400" />
-            Admin Verification Panel
-          </Link>
-          <Link
-            href="/me"
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-200 hover:bg-zinc-900"
-          >
-            <User className="w-4 h-4 text-teal-400" />
-            My Profile
+            <ShieldCheck className="w-4 h-4 text-teal-400" />
+            Verify My ID
           </Link>
 
-          <div className="pt-3 border-t border-zinc-800 flex items-center justify-between">
-            <div className="text-xs text-zinc-400">
-              Role: <strong className="text-zinc-200">{currentUser?.verification_status}</strong>
-            </div>
-            <button
-              onClick={() => {
-                logout();
-                setMobileMenuOpen(false);
-              }}
-              className="text-xs font-semibold text-rose-400 flex items-center gap-1"
+          {isAdmin && (
+            <Link
+              href="/admin/verifications"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-purple-300 hover:bg-purple-950/40"
             >
-              <LogOut className="w-3.5 h-3.5" /> Logout
-            </button>
-          </div>
+              <Layers className="w-4 h-4 text-purple-400" />
+              Admin Panel
+            </Link>
+          )}
+
+          {currentUser ? (
+            <>
+              <Link
+                href="/me"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-200 hover:bg-zinc-900"
+              >
+                <User className="w-4 h-4 text-teal-400" />
+                My Profile
+                {currentUser.verification_status === 'verified' && (
+                  <ShieldCheck className="w-3.5 h-3.5 text-teal-400 ml-auto" />
+                )}
+              </Link>
+              <div className="pt-2 border-t border-zinc-800">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logout();
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-rose-400 hover:bg-rose-950/30 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="pt-2 border-t border-zinc-800 flex flex-col gap-2">
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-zinc-300 bg-zinc-900 hover:bg-zinc-800 transition-colors"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/signup"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-teal-500 shadow-glow-purple"
+              >
+                Sign Up Free
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </header>

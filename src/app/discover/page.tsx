@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { StudentCard } from '@/components/StudentCard';
 import { HobbyBadge } from '@/components/HobbyBadge';
@@ -15,15 +16,26 @@ import {
 } from 'lucide-react';
 
 export default function DiscoverPage() {
-  const { profiles, hobbies, currentUser } = useAuth();
+  const router = useRouter();
+  const { profiles, hobbies, currentUser, isLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHobby, setSelectedHobby] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
 
+  // Auth guard — redirect to login if not logged in
+  useEffect(() => {
+    if (!isLoading && !currentUser) {
+      router.push('/login');
+    }
+  }, [currentUser, isLoading, router]);
+
   const isVerified = currentUser?.verification_status === 'verified';
 
+  // Show only real (non-demo) profiles in the discover feed
+  const realProfiles = profiles.filter((p) => !p.is_demo);
+
   // Filter profiles based on search, hobby, and year
-  const filteredProfiles = profiles.filter((profile) => {
+  const filteredProfiles = realProfiles.filter((profile) => {
     // Exclude current user from the discover grid
     if (currentUser && profile.id === currentUser.id) return false;
 
@@ -52,6 +64,15 @@ export default function DiscoverPage() {
     return true;
   });
 
+  if (isLoading || !currentUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl border-2 border-purple-500/50 border-t-purple-400 animate-spin" />
+      </div>
+    );
+  }
+
+
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
       {/* Header & Title */}
@@ -64,7 +85,7 @@ export default function DiscoverPage() {
             Discover Your Campus Vibe
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Connect with residential batchmates sharing your hobbies, projects, and sports.
+            Connect with CSJMU batchmates sharing your hobbies, projects, and sports.
           </p>
         </div>
 

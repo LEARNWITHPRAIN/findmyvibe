@@ -1,9 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Profile, Hobby, Message, VerificationStatus } from './types';
 import { INITIAL_PROFILES, INITIAL_HOBBIES, INITIAL_MESSAGES } from './mockData';
 import { createClient } from './supabase/client';
+
+const ADMIN_EMAIL = 'prakharjain2731@gmail.com';
 
 interface AuthContextType {
   currentUser: Profile | null;
@@ -11,6 +14,7 @@ interface AuthContextType {
   hobbies: Hobby[];
   messages: Message[];
   isLoading: boolean;
+  isLogingOut: boolean;
   isSupabaseConfigured: boolean;
   login: (email: string, pass: string) => Promise<{ error?: string }>;
   signup: (email: string, pass: string) => Promise<{ error?: string; requiresEmailConfirm?: boolean }>;
@@ -19,7 +23,6 @@ interface AuthContextType {
   submitVerification: (idCardDataUrl: string) => Promise<void>;
   updateVerificationStatus: (userId: string, status: VerificationStatus) => Promise<void>;
   sendMessage: (receiverId: string, content: string) => Promise<{ success: boolean; error?: string }>;
-  switchDemoRole: (role: 'unverified' | 'pending' | 'verified' | 'admin') => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,11 +32,13 @@ const LOCAL_STORAGE_KEY_PROFILES = 'fmv_profiles';
 const LOCAL_STORAGE_KEY_MESSAGES = 'fmv_messages';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>(INITIAL_PROFILES);
   const [hobbies] = useState<Hobby[]>(INITIAL_HOBBIES);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLogingOut, setIsLogingOut] = useState(false);
   const [isSupabaseConfigured, setIsSupabaseConfigured] = useState(false);
 
   // Initialize state from local storage or defaults
@@ -55,16 +60,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(LOCAL_STORAGE_KEY_MESSAGES, JSON.stringify(INITIAL_MESSAGES));
       }
 
+      // Only restore a real (non-demo) user session
       if (storedUser) {
-        setCurrentUser(JSON.parse(storedUser));
+        const parsed: Profile = JSON.parse(storedUser);
+        // Don't auto-restore demo accounts
+        if (!parsed.is_demo) {
+          setCurrentUser(parsed);
+        } else {
+          // Clear stale demo session
+          localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
+          setCurrentUser(null);
+        }
       } else {
-        // Default initial session: Aarav (verified) or demo student
-        const defaultUser: Profile = {
-          ...INITIAL_PROFILES[0],
-          is_admin: true, // Default to admin toggle available for full inspection
-        };
-        setCurrentUser(defaultUser);
-        localStorage.setItem(LOCAL_STORAGE_KEY_USER, JSON.stringify(defaultUser));
+        // No stored session — start as logged-out guest
+        setCurrentUser(null);
       }
 
       // Check if real Supabase credentials are configured
@@ -91,13 +100,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setCurrentUser(user);
     if (user) {
       localStorage.setItem(LOCAL_STORAGE_KEY_USER, JSON.stringify(user));
-      // Also update in profiles list
-      setProfiles((prev) => {
-        const index = prev.findIndex((p) => p.id === user.id);
-        const next = index >= 0 ? [...prev.slice(0, index), user, ...prev.slice(index + 1)] : [user, ...prev];
-        localStorage.setItem(LOCAL_STORAGE_KEY_PROFILES, JSON.stringify(next));
-        return next;
-      });
+      // Also update in profiles list (only for real users)
+      if (!user.is_demo) {
+        setProfiles((prev) => {
+          const index = prev.findIndex((p) => p.id === user.id);
+          const next = index >= 0 ? [...prev.slice(0, index), user, ...prev.slice(index + 1)] : [user, ...prev];
+          localStorage.setItem(LOCAL_STORAGE_KEY_PROFILES, JSON.stringify(next));
+          return next;
+        });
+      }
     } else {
       localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
     }
@@ -111,7 +122,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password: _pass });
         if (error) return { error: error.message };
         if (data.user) {
-          // Fetch profile
           const { data: profileData } = await supabase
             .from('profiles')
             .select('*, hobbies:profile_hobbies(hobby:hobbies(*))')
@@ -119,7 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .single();
 
           if (profileData) {
-            persistUser(profileData);
+            const isAdmin = profileData.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+            persistUser({ ...profileData, is_admin: isAdmin });
             return {};
           }
         }
@@ -128,23 +139,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // 2. Demo fallback login
-    const existing = profiles.find((p) => p.email?.toLowerCase() === email.toLowerCase()) || {
-      id: `usr_${Date.now()}`,
-      full_name: email.split('@')[0],
-      department: 'Computer Science (UIET)',
-      year: '2',
-      gender: 'Other',
+    // 2. Demo fallback login — create a fresh real (non-demo) user
+    const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    const newUser: Profile = {
+      id: `usr_real_${Date.now()}`,
+      full_name: email.split('@')[0].replace('.', ' '),
+      department: 'CSJMU',
+      year: '1',
+      gender: 'Prefer not to say',
       college: 'CSJMU',
       email_verified: true,
-      verification_status: 'unverified' as VerificationStatus,
-      is_admin: email.includes('admin'),
+      verification_status: 'unverified',
+      is_admin: isAdmin,
+      is_demo: false,
       created_at: new Date().toISOString(),
       email,
-      hobbies: [INITIAL_HOBBIES[2]],
+      hobbies: [],
     };
 
-    persistUser(existing);
+    persistUser(newUser);
     return {};
   };
 
@@ -166,17 +179,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Demo signup
+    // Demo signup — new real (non-demo) user
+    const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
     const newUser: Profile = {
-      id: `usr_${Date.now()}`,
-      full_name: email.split('@')[0],
-      department: 'UIET - CSJMU',
+      id: `usr_real_${Date.now()}`,
+      full_name: email.split('@')[0].replace('.', ' '),
+      department: 'CSJMU',
       year: '1',
       gender: 'Prefer not to say',
       college: 'CSJMU',
       email_verified: false,
       verification_status: 'unverified',
-      is_admin: false,
+      is_admin: isAdmin,
+      is_demo: false,
       created_at: new Date().toISOString(),
       email,
       hobbies: [],
@@ -187,11 +202,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    setIsLogingOut(true);
     if (isSupabaseConfigured) {
       const supabase = createClient();
       await supabase.auth.signOut();
     }
+    // Wait for 1.5 seconds to show loading, then clear
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     persistUser(null);
+    setIsLogingOut(false);
+    router.push('/');
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
@@ -221,7 +241,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isSupabaseConfigured) {
       try {
         const supabase = createClient();
-        // Update profile verification status
         await supabase.from('profiles').update({
           id_card_url: idCardDataUrl,
           verification_status: 'pending',
@@ -292,40 +311,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: true };
   };
 
-  // Demo Switcher Helper for instant test verification flows
-  const switchDemoRole = (role: 'unverified' | 'pending' | 'verified' | 'admin') => {
-    if (!currentUser) return;
-    let updated: Profile;
-    if (role === 'unverified') {
-      updated = {
-        ...currentUser,
-        verification_status: 'unverified',
-        is_admin: false,
-        id_card_url: null,
-      };
-    } else if (role === 'pending') {
-      updated = {
-        ...currentUser,
-        verification_status: 'pending',
-        is_admin: false,
-        id_card_url: 'https://images.unsplash.com/photo-1589386417686-0d34b5903d23?w=600&auto=format&fit=crop&q=80',
-      };
-    } else if (role === 'verified') {
-      updated = {
-        ...currentUser,
-        verification_status: 'verified',
-        is_admin: false,
-      };
-    } else {
-      updated = {
-        ...currentUser,
-        verification_status: 'verified',
-        is_admin: true,
-      };
-    }
-    persistUser(updated);
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -334,6 +319,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         hobbies,
         messages,
         isLoading,
+        isLogingOut,
         isSupabaseConfigured,
         login,
         signup,
@@ -342,9 +328,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         submitVerification,
         updateVerificationStatus,
         sendMessage,
-        switchDemoRole,
       }}
     >
+      {/* Logout Loading Overlay */}
+      {isLogingOut && (
+        <div className="fixed inset-0 z-[9999] bg-zinc-950/95 backdrop-blur-md flex flex-col items-center justify-center gap-4">
+          <div className="w-14 h-14 rounded-2xl border-2 border-purple-500/50 border-t-purple-400 animate-spin" />
+          <p className="text-zinc-300 text-sm font-semibold tracking-wide animate-pulse">Signing you out…</p>
+        </div>
+      )}
       {children}
     </AuthContext.Provider>
   );

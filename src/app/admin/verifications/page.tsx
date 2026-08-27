@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '@/lib/authContext';
 import { Profile, VerificationStatus } from '@/lib/types';
 import {
@@ -13,14 +14,43 @@ import {
   Clock,
   Layers,
   Search,
+  Lock,
 } from 'lucide-react';
 
+const ADMIN_EMAIL = 'prakharjain2731@gmail.com';
+
 export default function AdminVerificationsPage() {
-  const { profiles, updateVerificationStatus } = useAuth();
+  const { profiles, updateVerificationStatus, currentUser } = useAuth();
   const [selectedProfileForReview, setSelectedProfileForReview] = useState<Profile | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'verified' | 'rejected'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
+
+  // === ADMIN ACCESS GATE ===
+  const isAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-[88vh] flex flex-col items-center justify-center px-4 text-center space-y-6">
+        <div className="w-20 h-20 rounded-3xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+          <Lock className="w-10 h-10" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-black text-white mb-2">Access Denied</h1>
+          <p className="text-sm text-zinc-400 max-w-sm mx-auto">
+            This admin panel is restricted. Only authorised administrators can access this page.
+          </p>
+        </div>
+        <Link
+          href="/discover"
+          className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-teal-500 text-white font-bold text-sm shadow-glow-purple"
+        >
+          Back to Discover
+        </Link>
+      </div>
+    );
+  }
+
 
   const handleAction = async (userId: string, status: VerificationStatus, studentName: string) => {
     await updateVerificationStatus(userId, status);
