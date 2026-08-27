@@ -27,6 +27,7 @@ ON CONFLICT (name) DO NOTHING;
 -- 2. Create Profiles table
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
   full_name TEXT,
   department TEXT,
   year TEXT,                                  -- '1', '2', '3', '4'
@@ -167,9 +168,10 @@ CREATE POLICY "Users can read their own ID card"
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, email_verified, verification_status, college)
+  INSERT INTO public.profiles (id, email, full_name, email_verified, verification_status, college)
   VALUES (
     new.id,
+    new.email,
     COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
     COALESCE(new.email_confirmed_at IS NOT NULL, false),
     'unverified',

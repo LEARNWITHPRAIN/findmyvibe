@@ -180,9 +180,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
+    // ─── Realtime Message Subscription ───────────────────────────────────────
+    const messageSubscription = supabase
+      .channel('public:messages')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          const newMsg = payload.new as Message;
+          setMessages((prev) => {
+            if (prev.find(m => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      messageSubscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
