@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Profile, Hobby, Message, VerificationStatus } from './types';
-import { INITIAL_PROFILES, INITIAL_HOBBIES, INITIAL_MESSAGES } from './mockData';
+import { INITIAL_HOBBIES, INITIAL_MESSAGES, INITIAL_PROFILES } from './mockData';
 import { createClient } from './supabase/client';
 
 const ADMIN_EMAIL = 'prakharjain2731@gmail.com';
@@ -15,7 +15,6 @@ interface AuthContextType {
   messages: Message[];
   isLoading: boolean;
   isLogingOut: boolean;
-  isSupabaseConfigured: boolean;
   login: (email: string, pass: string) => Promise<{ error?: string }>;
   signup: (email: string, pass: string) => Promise<{ error?: string; requiresEmailConfirm?: boolean }>;
   logout: () => Promise<void>;
@@ -27,258 +26,219 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY_USER = 'fmv_current_user';
-const LOCAL_STORAGE_KEY_PROFILES = 'fmv_profiles';
-const LOCAL_STORAGE_KEY_MESSAGES = 'fmv_messages';
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper: load full profile row from Supabase
+// ─────────────────────────────────────────────────────────────────────────────
+async function fetchProfile(supabase: ReturnType<typeof createClient>, userId: string): Promise<Profile | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*, profile_hobbies(hobby:hobbies(*))')
+    .eq('id', userId)
+    .single();
 
+  if (error || !data) return null;
+
+  // Flatten nested hobbies join
+  const hobbies: Hobby[] = (data.profile_hobbies ?? []).map(
+    (ph: { hobby: Hobby }) => ph.hobby
+  );
+
+  const isAdmin = (data.email ?? '').toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+  return { ...data, hobbies, is_admin: isAdmin } as Profile;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper: load all (non-demo) profiles for discover feed
+// ─────────────────────────────────────────────────────────────────────────────
+async function fetchAllProfiles(supabase: ReturnType<typeof createClient>): Promise<Profile[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*, profile_hobbies(hobby:hobbies(*))');
+
+  if (error || !data) return [];
+
+  return data.map((row: Record<string, unknown>) => {
+    const hobbies: Hobby[] = ((row.profile_hobbies as { hobby: Hobby }[]) ?? []).map(
+      (ph) => ph.hobby
+    );
+    const email = (row.email as string) ?? '';
+    const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    return { ...row, hobbies, is_admin: isAdmin, is_demo: false } as Profile;
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const supabase = createClient();
+
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
-  const [profiles, setProfiles] = useState<Profile[]>(INITIAL_PROFILES);
+  const [profiles, setProfiles] = useState<Profile[]>(INITIAL_PROFILES); // start with demo data, swap on load
   const [hobbies] = useState<Hobby[]>(INITIAL_HOBBIES);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [isLoading, setIsLoading] = useState(true);
   const [isLogingOut, setIsLogingOut] = useState(false);
-  const [isSupabaseConfigured, setIsSupabaseConfigured] = useState(false);
 
-  // Initialize state from local storage or defaults
+  // ─── On mount: restore session ────────────────────────────────────────────
   useEffect(() => {
-    try {
-      const storedProfiles = localStorage.getItem(LOCAL_STORAGE_KEY_PROFILES);
-      const storedMessages = localStorage.getItem(LOCAL_STORAGE_KEY_MESSAGES);
-      const storedUser = localStorage.getItem(LOCAL_STORAGE_KEY_USER);
+    let mounted = true;
 
-      if (storedProfiles) {
-        setProfiles(JSON.parse(storedProfiles));
-      } else {
-        localStorage.setItem(LOCAL_STORAGE_KEY_PROFILES, JSON.stringify(INITIAL_PROFILES));
-      }
-
-      if (storedMessages) {
-        setMessages(JSON.parse(storedMessages));
-      } else {
-        localStorage.setItem(LOCAL_STORAGE_KEY_MESSAGES, JSON.stringify(INITIAL_MESSAGES));
-      }
-
-      // Only restore a real (non-demo) user session
-      if (storedUser) {
-        const parsed: Profile = JSON.parse(storedUser);
-        // Don't auto-restore demo accounts
-        if (!parsed.is_demo) {
-          setCurrentUser(parsed);
-        } else {
-          // Clear stale demo session
-          localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
-          setCurrentUser(null);
-        }
-      } else {
-        // No stored session — start as logged-out guest
-        setCurrentUser(null);
-      }
-
-      // Check if real Supabase credentials are configured
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      if (
-        supabaseUrl &&
-        supabaseUrl.startsWith('http') &&
-        !supabaseUrl.includes('placeholder') &&
-        supabaseAnonKey &&
-        !supabaseAnonKey.includes('placeholder')
-      ) {
-        setIsSupabaseConfigured(true);
-      }
-    } catch (e) {
-      console.error('Error loading initial session', e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Save changes to localStorage helper
-  const persistUser = (user: Profile | null) => {
-    setCurrentUser(user);
-    if (user) {
-      localStorage.setItem(LOCAL_STORAGE_KEY_USER, JSON.stringify(user));
-      // Also update in profiles list (only for real users)
-      if (!user.is_demo) {
-        setProfiles((prev) => {
-          const index = prev.findIndex((p) => p.id === user.id);
-          const next = index >= 0 ? [...prev.slice(0, index), user, ...prev.slice(index + 1)] : [user, ...prev];
-          localStorage.setItem(LOCAL_STORAGE_KEY_PROFILES, JSON.stringify(next));
-          return next;
-        });
-      }
-    } else {
-      localStorage.removeItem(LOCAL_STORAGE_KEY_USER);
-    }
-  };
-
-  const login = async (email: string, _pass: string) => {
-    // 1. If Supabase is connected, attempt auth
-    if (isSupabaseConfigured) {
+    const init = async () => {
       try {
-        const supabase = createClient();
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password: _pass });
-        if (error) return { error: error.message };
-        if (data.user) {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*, hobbies:profile_hobbies(hobby:hobbies(*))')
-            .eq('id', data.user.id)
-            .single();
+        // 1. Get current session from Supabase cookie
+        const { data: { session } } = await supabase.auth.getSession();
 
-          if (profileData) {
-            const isAdmin = profileData.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-            persistUser({ ...profileData, is_admin: isAdmin });
-            return {};
+        if (session?.user && mounted) {
+          const profile = await fetchProfile(supabase, session.user.id);
+          if (mounted) setCurrentUser(profile);
+        }
+
+        // 2. Load all real profiles for discover feed
+        const { data: { session: sess } } = await supabase.auth.getSession();
+        if (sess && mounted) {
+          const allProfiles = await fetchAllProfiles(supabase);
+          if (mounted && allProfiles.length > 0) {
+            setProfiles(allProfiles);
           }
         }
-      } catch (err: unknown) {
-        console.warn('Supabase login failed, using fallback:', err);
+      } catch (err) {
+        console.error('Session init error:', err);
+      } finally {
+        if (mounted) setIsLoading(false);
       }
-    }
-
-    // 2. Demo fallback login — create a fresh real (non-demo) user
-    const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-    const newUser: Profile = {
-      id: `usr_real_${Date.now()}`,
-      full_name: email.split('@')[0].replace('.', ' '),
-      department: 'CSJMU',
-      year: '1',
-      gender: 'Prefer not to say',
-      college: 'CSJMU',
-      email_verified: true,
-      verification_status: 'unverified',
-      is_admin: isAdmin,
-      is_demo: false,
-      created_at: new Date().toISOString(),
-      email,
-      hobbies: [],
     };
 
-    persistUser(newUser);
+    init();
+
+    // 3. Listen for auth state changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        const profile = await fetchProfile(supabase, session.user.id);
+        setCurrentUser(profile);
+
+        // Reload discover feed
+        const allProfiles = await fetchAllProfiles(supabase);
+        if (allProfiles.length > 0) setProfiles(allProfiles);
+      }
+
+      if (event === 'SIGNED_OUT') {
+        setCurrentUser(null);
+        setProfiles(INITIAL_PROFILES); // revert to demo data when logged out
+      }
+
+      if (event === 'TOKEN_REFRESHED' && session?.user) {
+        const profile = await fetchProfile(supabase, session.user.id);
+        setCurrentUser(profile);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ─── Auth actions ──────────────────────────────────────────────────────────
+
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
     return {};
   };
 
-  const signup = async (email: string, _pass: string) => {
-    if (isSupabaseConfigured) {
-      try {
-        const supabase = createClient();
-        const { error } = await supabase.auth.signUp({
-          email,
-          password: _pass,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-          },
-        });
-        if (error) return { error: error.message };
-        return { requiresEmailConfirm: true };
-      } catch (err: unknown) {
-        console.warn('Supabase signup fallback:', err);
-      }
-    }
-
-    // Demo signup — new real (non-demo) user
-    const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-    const newUser: Profile = {
-      id: `usr_real_${Date.now()}`,
-      full_name: email.split('@')[0].replace('.', ' '),
-      department: 'CSJMU',
-      year: '1',
-      gender: 'Prefer not to say',
-      college: 'CSJMU',
-      email_verified: false,
-      verification_status: 'unverified',
-      is_admin: isAdmin,
-      is_demo: false,
-      created_at: new Date().toISOString(),
+  const signup = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
       email,
-      hobbies: [],
-    };
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
 
-    persistUser(newUser);
+    if (error) return { error: error.message };
     return { requiresEmailConfirm: true };
   };
 
   const logout = async () => {
     setIsLogingOut(true);
-    if (isSupabaseConfigured) {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-    }
-    // Wait for 1.5 seconds to show loading, then clear
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    persistUser(null);
+    await supabase.auth.signOut();
+    setCurrentUser(null);
     setIsLogingOut(false);
     router.push('/');
   };
 
+  // ─── Profile actions ───────────────────────────────────────────────────────
+
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!currentUser) return;
-    const updated = { ...currentUser, ...updates, updated_at: new Date().toISOString() };
-    persistUser(updated);
 
-    if (isSupabaseConfigured) {
-      try {
-        const supabase = createClient();
-        await supabase.from('profiles').update(updates).eq('id', currentUser.id);
-      } catch (err) {
-        console.error('Supabase profile update error:', err);
+    // Optimistic update
+    const updatedUser = { ...currentUser, ...updates, updated_at: new Date().toISOString() };
+    setCurrentUser(updatedUser);
+
+    // Persist to Supabase — exclude computed/joined fields
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { hobbies: _hobbies, is_demo: _demo, ...safeUpdates } = updates as Record<string, unknown>;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ ...safeUpdates, updated_at: new Date().toISOString() })
+      .eq('id', currentUser.id);
+
+    if (error) {
+      console.error('Profile update error:', error.message);
+    }
+
+    // If hobbies changed, sync profile_hobbies join table
+    if (updates.hobbies && Array.isArray(updates.hobbies)) {
+      // Delete existing
+      await supabase.from('profile_hobbies').delete().eq('profile_id', currentUser.id);
+      // Re-insert
+      const rows = (updates.hobbies as Hobby[])
+        .filter((h) => typeof h === 'object' && h.id < 90) // skip custom "Other" pseudo-hobbies
+        .map((h) => ({ profile_id: currentUser.id, hobby_id: h.id }));
+      if (rows.length > 0) {
+        await supabase.from('profile_hobbies').insert(rows);
       }
     }
   };
 
   const submitVerification = async (idCardDataUrl: string) => {
     if (!currentUser) return;
-    const updated: Profile = {
-      ...currentUser,
-      id_card_url: idCardDataUrl,
-      verification_status: 'pending',
-    };
-    persistUser(updated);
 
-    if (isSupabaseConfigured) {
-      try {
-        const supabase = createClient();
-        await supabase.from('profiles').update({
-          id_card_url: idCardDataUrl,
-          verification_status: 'pending',
-        }).eq('id', currentUser.id);
-      } catch (err) {
-        console.error('Supabase verification submission error:', err);
-      }
-    }
+    const updated = { ...currentUser, id_card_url: idCardDataUrl, verification_status: 'pending' as VerificationStatus };
+    setCurrentUser(updated);
+
+    await supabase
+      .from('profiles')
+      .update({ id_card_url: idCardDataUrl, verification_status: 'pending' })
+      .eq('id', currentUser.id);
   };
 
   const updateVerificationStatus = async (userId: string, status: VerificationStatus) => {
-    setProfiles((prev) => {
-      const next = prev.map((p) => (p.id === userId ? { ...p, verification_status: status } : p));
-      localStorage.setItem(LOCAL_STORAGE_KEY_PROFILES, JSON.stringify(next));
-      return next;
-    });
-
+    setProfiles((prev) => prev.map((p) => (p.id === userId ? { ...p, verification_status: status } : p)));
     if (currentUser?.id === userId) {
-      persistUser({ ...currentUser, verification_status: status });
+      setCurrentUser((prev) => prev ? { ...prev, verification_status: status } : prev);
     }
 
-    if (isSupabaseConfigured) {
-      try {
-        const supabase = createClient();
-        await supabase.from('profiles').update({ verification_status: status }).eq('id', userId);
-      } catch (err) {
-        console.error('Supabase update verification status error:', err);
-      }
-    }
+    await supabase
+      .from('profiles')
+      .update({ verification_status: status })
+      .eq('id', userId);
   };
 
+  // ─── Messaging ─────────────────────────────────────────────────────────────
+
   const sendMessage = async (receiverId: string, content: string) => {
-    if (!currentUser) {
-      return { success: false, error: 'Please login first' };
-    }
+    if (!currentUser) return { success: false, error: 'Please log in first.' };
 
     if (currentUser.verification_status !== 'verified') {
-      return { success: false, error: 'Verify your ID to start messaging other students.' };
+      return { success: false, error: 'Verify your CSJMU ID to start messaging.' };
     }
 
     const newMsg: Message = {
@@ -289,27 +249,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       created_at: new Date().toISOString(),
     };
 
-    setMessages((prev) => {
-      const next = [...prev, newMsg];
-      localStorage.setItem(LOCAL_STORAGE_KEY_MESSAGES, JSON.stringify(next));
-      return next;
+    // Optimistic UI update
+    setMessages((prev) => [...prev, newMsg]);
+
+    const { error } = await supabase.from('messages').insert({
+      sender_id: currentUser.id,
+      receiver_id: receiverId,
+      content: content.trim(),
     });
 
-    if (isSupabaseConfigured) {
-      try {
-        const supabase = createClient();
-        await supabase.from('messages').insert({
-          sender_id: currentUser.id,
-          receiver_id: receiverId,
-          content: content.trim(),
-        });
-      } catch (err) {
-        console.error('Supabase message error:', err);
-      }
+    if (error) {
+      console.error('Message send error:', error.message);
+      return { success: false, error: error.message };
     }
 
     return { success: true };
   };
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <AuthContext.Provider
@@ -320,7 +277,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         messages,
         isLoading,
         isLogingOut,
-        isSupabaseConfigured,
         login,
         signup,
         logout,
@@ -344,8 +300,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }

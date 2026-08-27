@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/onboarding';
+  const next = searchParams.get('next') ?? '/discover';
 
   if (code) {
     const supabase = createClient();
@@ -14,6 +14,6 @@ export async function GET(request: Request) {
     }
   }
 
-  // If error or code not present, redirect to onboarding / login
-  return NextResponse.redirect(`${origin}/onboarding`);
+  // Code missing or exchange failed — send to login with error hint
+  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
 }
