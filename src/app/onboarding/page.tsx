@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { HobbyBadge } from '@/components/HobbyBadge';
@@ -11,21 +12,36 @@ import {
   Building2,
   Sparkles,
   ArrowRight,
+  Mail,
 } from 'lucide-react';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { currentUser, hobbies, updateProfile } = useAuth();
+  const { currentUser, hobbies, updateProfile, isLoading } = useAuth();
 
-  const [fullName, setFullName] = useState(currentUser?.full_name || '');
-  const [department, setDepartment] = useState(currentUser?.department || '');
-  const [year, setYear] = useState(currentUser?.year || '1');
-  const [gender, setGender] = useState(currentUser?.gender || 'Prefer not to say');
-  const [bio, setBio] = useState(currentUser?.bio || '');
-  const [selectedHobbyIds, setSelectedHobbyIds] = useState<number[]>(
-    currentUser?.hobbies?.map((h) => h.id) || [1, 3]
-  );
+  const [fullName, setFullName] = useState('');
+  const [department, setDepartment] = useState('');
+  const [year, setYear] = useState('1');
+  const [gender, setGender] = useState('Prefer not to say');
+  const [bio, setBio] = useState('');
+  const [selectedHobbyIds, setSelectedHobbyIds] = useState<number[]>([1, 3]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && !currentUser) {
+      router.push('/login');
+    }
+    if (currentUser) {
+      if (currentUser.full_name) setFullName(currentUser.full_name);
+      if (currentUser.department) setDepartment(currentUser.department);
+      if (currentUser.year) setYear(currentUser.year);
+      if (currentUser.gender) setGender(currentUser.gender);
+      if (currentUser.bio) setBio(currentUser.bio);
+      if (currentUser.hobbies && currentUser.hobbies.length > 0) {
+        setSelectedHobbyIds(currentUser.hobbies.map((h) => h.id));
+      }
+    }
+  }, [currentUser, isLoading, router]);
 
   const toggleHobby = (hobbyId: number) => {
     setSelectedHobbyIds((prev) =>
@@ -57,6 +73,36 @@ export default function OnboardingPage() {
       setLoading(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl border-2 border-purple-500/50 border-t-purple-400 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-[85vh] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center space-y-4">
+          <div className="w-14 h-14 bg-rose-500/20 text-rose-400 rounded-2xl flex items-center justify-center mx-auto">
+            <Mail className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-bold text-white">Email Verification Required</h2>
+          <p className="text-xs text-zinc-400 leading-relaxed">
+            Please check your email and click the verification link before setting up your student profile.
+          </p>
+          <Link
+            href="/login"
+            className="inline-block py-2.5 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-teal-500 text-white font-bold text-xs shadow-glow-purple"
+          >
+            Go to Log In
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[88vh] py-12 px-4 sm:px-6 max-w-2xl mx-auto">

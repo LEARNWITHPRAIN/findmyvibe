@@ -3,12 +3,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { Mail, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function SignUpPage() {
-  const router = useRouter();
   const { signup } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -22,7 +20,9 @@ export default function SignUpPage() {
     e.preventDefault();
     setError(null);
 
-    if (!email || !password) {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail || !password) {
       setError('Please enter your email and a password.');
       return;
     }
@@ -39,7 +39,7 @@ export default function SignUpPage() {
 
     setLoading(true);
     try {
-      const res = await signup(email, password);
+      const res = await signup(cleanEmail, password);
       if (res.error) {
         setError(res.error);
       } else {
@@ -71,23 +71,37 @@ export default function SignUpPage() {
         </div>
 
         {submitted ? (
-          <div className="text-center py-4 space-y-4 animate-fade-in">
+          <div className="text-center py-4 space-y-5 animate-fade-in">
             <div className="w-16 h-16 bg-teal-500/20 border border-teal-500/40 rounded-full flex items-center justify-center mx-auto text-teal-400">
               <CheckCircle2 className="w-8 h-8" />
             </div>
-            <h2 className="text-lg font-bold text-white">Check Your Inbox!</h2>
-            <p className="text-xs text-zinc-400 leading-relaxed max-w-xs mx-auto">
-              We&apos;ve sent a verification link to <strong className="text-zinc-200">{email}</strong>. Click it to confirm your account.
-            </p>
+            <div>
+              <h2 className="text-lg font-bold text-white">Check Your Inbox!</h2>
+              <p className="text-xs text-zinc-300 leading-relaxed max-w-xs mx-auto mt-2">
+                We&apos;ve sent a verification link to <strong className="text-teal-400">{email}</strong>.
+              </p>
+            </div>
 
-            <div className="pt-4 border-t border-zinc-800 space-y-2">
-              <button
-                onClick={() => router.push('/onboarding')}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-bold text-xs shadow-glow-purple transition-all flex items-center justify-center gap-1.5"
+            <div className="p-4 rounded-2xl bg-zinc-950/80 border border-purple-500/30 text-xs text-zinc-400 text-left space-y-2">
+              <p className="font-semibold text-zinc-200">Next Step:</p>
+              <p>
+                1. Open your email inbox (and check Spam folder if needed).
+              </p>
+              <p>
+                2. Click the confirmation link to activate your account.
+              </p>
+              <p>
+                3. Once verified, you will be automatically redirected to set up your profile and hobbies!
+              </p>
+            </div>
+
+            <div className="pt-2 border-t border-zinc-800">
+              <Link
+                href="/login"
+                className="text-xs text-purple-400 hover:text-purple-300 font-semibold"
               >
-                <span>Continue to Profile Setup</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+                Already clicked the link? Go to Log In →
+              </Link>
             </div>
           </div>
         ) : (
