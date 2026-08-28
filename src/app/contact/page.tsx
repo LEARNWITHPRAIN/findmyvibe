@@ -1,19 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import {
   Mail,
   Send,
   ExternalLink,
   Copy,
   Check,
-  MessageSquare,
-  ShieldAlert,
-  Sparkles,
-  HelpCircle,
   Clock,
-  ArrowRight,
 } from 'lucide-react';
 
 export default function ContactPage() {

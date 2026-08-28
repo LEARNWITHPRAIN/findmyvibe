@@ -9,7 +9,6 @@ import {
   Mail,
   ShieldCheck,
   Heart,
-  ExternalLink,
   Users,
   Compass,
   FileText,

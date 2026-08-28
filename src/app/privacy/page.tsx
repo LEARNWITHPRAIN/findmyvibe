@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import {
   Lock,
   ShieldCheck,
@@ -9,7 +8,6 @@ import {
   Trash2,
   Database,
   Mail,
-  Server,
   Key,
 } from 'lucide-react';
 

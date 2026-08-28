@@ -6,11 +6,8 @@ import Image from 'next/image';
 import { FeedbackModal } from '@/components/FeedbackModal';
 import {
   Sparkles,
-  Users,
   ShieldCheck,
   Heart,
-  MessageSquare,
-  Building2,
   GraduationCap,
   Lock,
   ArrowRight,
