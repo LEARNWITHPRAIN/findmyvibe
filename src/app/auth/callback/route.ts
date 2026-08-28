@@ -10,7 +10,8 @@ export async function GET(request: Request) {
     const supabase = createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      // Redirect to login with verified flag so user sees success message
+      return NextResponse.redirect(`${origin}/login?verified=1`);
     }
   }
 

@@ -17,7 +17,6 @@ interface AuthContextType {
   isLogingOut: boolean;
   login: (email: string, pass: string) => Promise<{ error?: string }>;
   signup: (email: string, pass: string) => Promise<{ error?: string; requiresEmailConfirm?: boolean }>;
-  sendMagicLink: (email: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   submitVerification: (idCardDataUrl: string) => Promise<void>;
@@ -214,6 +213,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (error) {
+      // Friendly message for unverified email
+      if (error.message.toLowerCase().includes('email not confirmed')) {
+        return { error: 'Please verify your email first. Check your inbox for the confirmation link.' };
+      }
       return { error: error.message };
     }
 
@@ -259,20 +262,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { requiresEmailConfirm: true };
   };
 
-  const sendMagicLink = async (email: string) => {
-    const cleanEmail = email.trim().toLowerCase();
-    const { error } = await supabase.auth.signInWithOtp({
-      email: cleanEmail,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
 
-    if (error) {
-      return { error: error.message };
-    }
-    return {};
-  };
 
   const logout = async () => {
     setIsLogingOut(true);
@@ -294,17 +284,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { hobbies: _hobbies, is_demo: _demo, is_admin: _admin, ...safeUpdates } = updates as Record<string, unknown>;
 
+    // Use upsert so it works even if the trigger-created profile row is missing
     const { error } = await supabase
       .from('profiles')
-      .update({ ...safeUpdates, updated_at: new Date().toISOString() })
-      .eq('id', currentUser.id);
+      .upsert({ id: currentUser.id, ...safeUpdates, updated_at: new Date().toISOString() }, { onConflict: 'id' });
 
     if (error) {
-      console.error('Profile update error:', error.message);
+      console.error('Profile upsert error:', error.message, error.details);
     }
 
     if (updates.hobbies && Array.isArray(updates.hobbies)) {
-      await supabase.from('profile_hobbies').delete().eq('profile_id', currentUser.id);
+      const { error: delError } = await supabase.from('profile_hobbies').delete().eq('profile_id', currentUser.id);
+      if (delError) console.error('Hobby delete error:', delError.message);
       const rows = (updates.hobbies as Hobby[])
         .filter((h) => typeof h === 'object' && h.id < 90)
         .map((h) => ({ profile_id: currentUser.id, hobby_id: h.id }));
@@ -406,7 +397,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLogingOut,
         login,
         signup,
-        sendMagicLink,
         logout,
         updateProfile,
         submitVerification,
