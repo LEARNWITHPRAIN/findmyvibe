@@ -63,7 +63,7 @@ export default function ProfileDetailPage() {
           <div className="absolute inset-0 bg-dot-grid opacity-40" />
           <div className="absolute top-4 right-4 flex items-center gap-2">
             <span className="px-3 py-1 rounded-full bg-zinc-900/80 backdrop-blur-md border border-white/10 text-[11px] font-semibold text-zinc-300 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-teal-400" /> CSJMU Residential
+              <MapPin className="w-3.5 h-3.5 text-teal-400" /> CSJMU Student
             </span>
           </div>
         </div>

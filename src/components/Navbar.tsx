@@ -14,7 +14,10 @@ import {
   Menu,
   X,
   Layers,
+  Info,
+  MessageSquarePlus,
 } from 'lucide-react';
+import { FeedbackModal } from './FeedbackModal';
 
 const ADMIN_EMAIL = 'prakharjain2731@gmail.com';
 
@@ -22,6 +25,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const { currentUser, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const isActive = (path: string) => pathname === path;
   const isAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
@@ -87,6 +91,26 @@ export default function Navbar() {
               <ShieldCheck className="w-4 h-4 text-teal-400" />
               ID Verification
             </Link>
+
+            <Link
+              href="/about"
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                isActive('/about')
+                  ? 'bg-zinc-800 text-white'
+                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
+              }`}
+            >
+              <Info className="w-3.5 h-3.5 text-purple-400" />
+              About
+            </Link>
+
+            <button
+              onClick={() => setFeedbackOpen(true)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition-all cursor-pointer"
+            >
+              <MessageSquarePlus className="w-3.5 h-3.5 text-teal-400" />
+              Feedback
+            </button>
 
             {/* Admin link — only for the admin account */}
             {isAdmin && (
@@ -197,6 +221,28 @@ export default function Navbar() {
             Verify My ID
           </Link>
 
+          <Link
+            href="/about"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              isActive('/about') ? 'bg-zinc-800 text-white' : 'text-zinc-200 hover:bg-zinc-900'
+            }`}
+          >
+            <Info className="w-4 h-4 text-purple-400" />
+            About Community
+          </Link>
+
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setFeedbackOpen(true);
+            }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-200 hover:bg-zinc-900 transition-colors text-left cursor-pointer"
+          >
+            <MessageSquarePlus className="w-4 h-4 text-teal-400" />
+            Give Feedback / Report Bug
+          </button>
+
           {isAdmin && (
             <Link
               href="/admin/verifications"
@@ -254,6 +300,9 @@ export default function Navbar() {
           )}
         </div>
       )}
+
+      {/* Reusable Feedback Modal triggered from Navbar */}
+      <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </header>
   );
 }

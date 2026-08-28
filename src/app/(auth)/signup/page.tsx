@@ -62,7 +62,9 @@ export default function SignUpPage() {
             <Image src="/logo.jpg" alt="Find My Vibe" fill className="object-cover" />
           </div>
           <h1 className="text-2xl font-black text-white tracking-tight">Join Find My Vibe</h1>
-          <p className="text-xs text-zinc-400 mt-1">Open to all CSJMU students — sign up with any email</p>
+          <p className="text-xs text-zinc-400 mt-1">
+            Unofficial student network for all CSJMU hostellers, day scholars & campus residents
+          </p>
         </div>
 
         {submitted ? (
@@ -142,6 +144,18 @@ export default function SignUpPage() {
                   required
                 />
               </div>
+            </div>
+
+            {/* Privacy notice note */}
+            <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800 text-[11px] text-zinc-400 space-y-1">
+              <p>
+                🔒 <strong className="text-zinc-300">Privacy Notice:</strong> Student IDs are collected solely to verify enrolled student status and are deleted immediately after review.
+              </p>
+              <p className="text-[10px] text-zinc-500">
+                By signing up, you agree to our{' '}
+                <Link href="/terms" className="text-purple-400 hover:underline">Terms</Link> and{' '}
+                <Link href="/privacy" className="text-purple-400 hover:underline">Privacy Policy</Link>.
+              </p>
             </div>
 
             <button

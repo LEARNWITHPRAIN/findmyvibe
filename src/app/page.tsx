@@ -38,8 +38,9 @@ export default function LandingPage() {
         {/* Exclusive Pill */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 text-xs font-semibold text-zinc-300 shadow-xl mb-8 animate-fade-in">
           <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping" />
-          <span className="text-teal-400 font-bold">Exclusively for</span>
-          <span className="text-zinc-200">CSJMU Students, Kanpur</span>
+          <span className="text-teal-400 font-bold">Unofficial Student Network</span>
+          <span className="text-zinc-500">•</span>
+          <span className="text-zinc-200">Hostellers, Day Scholars & All CSJMU Students</span>
         </div>
 
         {/* Mascot Logo Visual Highlight */}
@@ -65,7 +66,7 @@ export default function LandingPage() {
 
         {/* Subtitle */}
         <p className="text-base sm:text-xl text-zinc-400 max-w-2xl font-normal leading-relaxed mb-10">
-          A verified student community to match with batchmates who share your niche hobbies, form hackathon squads, jam at the OAT amphitheater, and build lifelong friendships.
+          An unofficial peer community for all CSJMU students — match with batchmates across hostels & daily commutes who share your niche hobbies, form hackathon squads, and build lifelong friendships safely.
         </p>
 
         {/* CTAs */}

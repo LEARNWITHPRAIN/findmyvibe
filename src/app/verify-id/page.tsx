@@ -120,8 +120,16 @@ export default function VerifyIdPage() {
             Verify Your CSJMU Student ID
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            To keep Find My Vibe safe and authentic for all students, take a selfie holding your CSJMU university ID card.
+            Open to all CSJMU students (hostel residents, campus residents & day scholars). To keep Find My Vibe safe and authentic, submit a selfie holding your university student ID card.
           </p>
+
+          {/* Privacy Guarantee Banner */}
+          <div className="mt-4 p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/30 text-xs text-teal-200 flex items-start gap-2.5">
+            <ShieldCheck className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+            <p className="leading-relaxed">
+              <strong>ID Privacy Guarantee:</strong> Your university ID is collected only to verify your student status. It will not be publicly displayed or used for other purposes. After verification, the uploaded ID will be deleted.
+            </p>
+          </div>
         </div>
 
         {/* Status Messages */}

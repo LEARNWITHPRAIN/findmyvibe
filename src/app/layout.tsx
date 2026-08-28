@@ -5,6 +5,8 @@ import { AuthProvider } from '@/lib/authContext';
 import { Navbar } from '@/components/Navbar';
 import { VerificationBanner } from '@/components/VerificationBanner';
 
+import { Footer } from '@/components/Footer';
+
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
@@ -67,17 +69,7 @@ export default function RootLayout({
           <main className="flex-1 flex flex-col">
             {children}
           </main>
-          <footer className="border-t border-zinc-900 bg-zinc-950/80 py-8 px-4 text-center text-xs text-zinc-500">
-            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-                <span>Find My Vibe • CSJMU Student Community</span>
-              </div>
-              <p className="text-zinc-600">
-                100% Student Verified. Connect with your campus vibe.
-              </p>
-            </div>
-          </footer>
+          <Footer />
         </AuthProvider>
       </body>
     </html>
