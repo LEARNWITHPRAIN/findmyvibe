@@ -17,6 +17,7 @@ interface AuthContextType {
   isLogingOut: boolean;
   login: (email: string, pass: string) => Promise<{ error?: string }>;
   signup: (email: string, pass: string) => Promise<{ error?: string; requiresEmailConfirm?: boolean }>;
+  sendMagicLink: (email: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   submitVerification: (idCardDataUrl: string) => Promise<void>;
@@ -258,6 +259,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { requiresEmailConfirm: true };
   };
 
+  const sendMagicLink = async (email: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const { error } = await supabase.auth.signInWithOtp({
+      email: cleanEmail,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      return { error: error.message };
+    }
+    return {};
+  };
+
   const logout = async () => {
     setIsLogingOut(true);
     await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -390,6 +406,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLogingOut,
         login,
         signup,
+        sendMagicLink,
         logout,
         updateProfile,
         submitVerification,

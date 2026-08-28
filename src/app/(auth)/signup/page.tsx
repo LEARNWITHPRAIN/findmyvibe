@@ -7,11 +7,9 @@ import { useAuth } from '@/lib/authContext';
 import { Mail, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function SignUpPage() {
-  const { signup } = useAuth();
+  const { sendMagicLink } = useAuth();
 
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -22,24 +20,14 @@ export default function SignUpPage() {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    if (!cleanEmail || !password) {
-      setError('Please enter your email and a password.');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+    if (!cleanEmail) {
+      setError('Please enter your email.');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await signup(cleanEmail, password);
+      const res = await sendMagicLink(cleanEmail);
       if (res.error) {
         setError(res.error);
       } else {
@@ -66,7 +54,7 @@ export default function SignUpPage() {
             Join Find My Vibe
           </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            Open to all CSJMU students — sign up with any email
+            Open to all CSJMU students — sign up with any email using Magic Link
           </p>
         </div>
 
@@ -78,7 +66,7 @@ export default function SignUpPage() {
             <div>
               <h2 className="text-lg font-bold text-white">Check Your Inbox!</h2>
               <p className="text-xs text-zinc-300 leading-relaxed max-w-xs mx-auto mt-2">
-                We&apos;ve sent a verification link to <strong className="text-teal-400">{email}</strong>.
+                We&apos;ve sent a magic link to <strong className="text-teal-400">{email}</strong>.
               </p>
             </div>
 
@@ -88,7 +76,7 @@ export default function SignUpPage() {
                 1. Open your email inbox (and check Spam folder if needed).
               </p>
               <p>
-                2. Click the confirmation link to activate your account.
+                2. Click the secure link to instantly log in.
               </p>
               <p>
                 3. Once verified, you will be automatically redirected to set up your profile and hobbies!
@@ -96,12 +84,12 @@ export default function SignUpPage() {
             </div>
 
             <div className="pt-2 border-t border-zinc-800">
-              <Link
-                href="/login"
+              <button
+                onClick={() => setSubmitted(false)}
                 className="text-xs text-purple-400 hover:text-purple-300 font-semibold"
               >
-                Already clicked the link? Go to Log In →
-              </Link>
+                Didn&apos;t receive it? Try again
+              </button>
             </div>
           </div>
         ) : (
@@ -130,46 +118,12 @@ export default function SignUpPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors"
-                  required
-                />
-              </div>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
               className="w-full py-3 mt-2 rounded-xl bg-gradient-to-r from-purple-600 via-rose-500 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-bold text-sm shadow-glow-purple transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
-              {loading ? 'Creating Account…' : 'Create My Account'}
+              {loading ? 'Sending link…' : 'Send Magic Link'}
               <ArrowRight className="w-4 h-4" />
             </button>
 
