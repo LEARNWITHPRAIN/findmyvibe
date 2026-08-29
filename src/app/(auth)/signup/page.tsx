@@ -95,9 +95,21 @@ export default function SignUpPage() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{error}</span>
+              <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+                {error.toLowerCase().includes('already exists') && (
+                  <div className="pl-6">
+                    <Link
+                      href="/login"
+                      className="inline-flex items-center gap-1 text-teal-400 hover:text-teal-300 font-semibold underline underline-offset-2"
+                    >
+                      Click here to Log In now →
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
 

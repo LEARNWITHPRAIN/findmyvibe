@@ -142,6 +142,10 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('id-verifications', 'id-verifications', false)
 ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
+
 CREATE POLICY "Users can upload their own ID card"
   ON storage.objects FOR INSERT
   TO authenticated

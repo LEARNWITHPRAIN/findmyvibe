@@ -20,11 +20,11 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
-const MAX_PHOTO_BYTES = 20 * 1024; // 20 KB
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB
 
 export default function MyProfilePage() {
   const router = useRouter();
-  const { currentUser, hobbies, updateProfile, isLoading } = useAuth();
+  const { currentUser, hobbies, updateProfile, uploadAvatar, isLoading } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [department, setDepartment] = useState('');
@@ -34,6 +34,7 @@ export default function MyProfilePage() {
   const [selectedHobbyIds, setSelectedHobbyIds] = useState<number[]>([]);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSavedToast, setShowSavedToast] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,23 +64,35 @@ export default function MyProfilePage() {
     );
   };
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoError(null);
 
     if (file.size > MAX_PHOTO_BYTES) {
       setPhotoError(
-        `Photo is ${(file.size / 1024).toFixed(1)} KB — must be under 20 KB. Please compress it first.`
+        `Photo is ${(file.size / (1024 * 1024)).toFixed(1)} MB — must be under 5 MB.`
       );
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setAvatarPreview(ev.target?.result as string);
-    };
-    reader.readAsDataURL(file);
+    setIsUploadingPhoto(true);
+    try {
+      const res = await uploadAvatar(file);
+      if (res.error) {
+        setPhotoError(res.error);
+      } else if (res.url) {
+        setAvatarPreview(res.url);
+        await updateProfile({ avatar_url: res.url });
+        setShowSavedToast(true);
+        setTimeout(() => setShowSavedToast(false), 3500);
+      }
+    } catch (err) {
+      console.error(err);
+      setPhotoError('Failed to upload photo.');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -146,11 +159,16 @@ export default function MyProfilePage() {
             </div>
             <button
               type="button"
+              disabled={isUploadingPhoto}
               onClick={() => fileInputRef.current?.click()}
-              className="absolute -bottom-2 -right-2 w-8 h-8 bg-purple-600 hover:bg-purple-500 rounded-xl flex items-center justify-center shadow-lg transition-colors"
+              className="absolute -bottom-2 -right-2 w-8 h-8 bg-purple-600 hover:bg-purple-500 rounded-xl flex items-center justify-center shadow-lg transition-colors disabled:opacity-50"
               title="Upload profile photo"
             >
-              <ImagePlus className="w-4 h-4 text-white" />
+              {isUploadingPhoto ? (
+                <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              ) : (
+                <ImagePlus className="w-4 h-4 text-white" />
+              )}
             </button>
             <input
               ref={fileInputRef}

@@ -19,6 +19,7 @@ interface AuthContextType {
   signup: (email: string, pass: string) => Promise<{ error?: string; requiresEmailConfirm?: boolean }>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<{ url?: string; error?: string }>;
   submitVerification: (idCardDataUrl: string) => Promise<void>;
   updateVerificationStatus: (userId: string, status: VerificationStatus) => Promise<{ success: boolean; error?: string }>;
   sendMessage: (receiverId: string, content: string) => Promise<{ success: boolean; error?: string }>;
@@ -30,26 +31,58 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: load full profile row from Supabase
 // ─────────────────────────────────────────────────────────────────────────────
-async function fetchProfile(supabase: ReturnType<typeof createClient>, userId: string): Promise<Profile | null> {
+async function fetchProfile(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  fallbackEmail?: string
+): Promise<Profile | null> {
   try {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('profiles')
       .select('*, profile_hobbies(hobby:hobbies(*))')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      console.warn('fetchProfile query error:', error.message);
+    }
 
-    const hobbies: Hobby[] = (data.profile_hobbies ?? []).map(
-      (ph: { hobby: Hobby }) => ph.hobby
-    );
+    // If profile row doesn't exist yet, insert a default one
+    if (!data && fallbackEmail) {
+      const defaultName = fallbackEmail.split('@')[0];
+      await supabase.from('profiles').upsert(
+        {
+          id: userId,
+          email: fallbackEmail,
+          full_name: defaultName,
+          email_verified: true,
+          verification_status: 'unverified',
+          college: 'CSJMU',
+        },
+        { onConflict: 'id' }
+      );
 
-    const email = (data.email ?? '').toLowerCase();
+      const refetched = await supabase
+        .from('profiles')
+        .select('*, profile_hobbies(hobby:hobbies(*))')
+        .eq('id', userId)
+        .maybeSingle();
+
+      data = refetched.data;
+    }
+
+    if (!data) return null;
+
+    const hobbies: Hobby[] = ((data.profile_hobbies as { hobby: Hobby }[]) ?? [])
+      .filter((ph) => ph && ph.hobby)
+      .map((ph) => ph.hobby);
+
+    const email = (data.email ?? fallbackEmail ?? '').toLowerCase();
     const isAdmin = email === ADMIN_EMAIL.toLowerCase();
 
     return { ...data, hobbies, is_admin: isAdmin, email_verified: true } as Profile;
   } catch (e) {
-    console.error('fetchProfile error', e);
+    console.error('fetchProfile exception:', e);
     return null;
   }
 }
@@ -64,18 +97,22 @@ async function fetchAllProfiles(supabase: ReturnType<typeof createClient>): Prom
       .select('*, profile_hobbies(hobby:hobbies(*))')
       .order('created_at', { ascending: false });
 
-    if (error || !data) return INITIAL_PROFILES;
+    if (error || !data || data.length === 0) return INITIAL_PROFILES;
 
     const realProfiles: Profile[] = data.map((row: Record<string, unknown>) => {
-      const hobbies: Hobby[] = ((row.profile_hobbies as { hobby: Hobby }[]) ?? []).map(
-        (ph) => ph.hobby
-      );
+      const hobbies: Hobby[] = (((row.profile_hobbies as { hobby: Hobby }[]) ?? [])
+        .filter((ph) => ph && ph.hobby)
+        .map((ph) => ph.hobby));
       const email = (row.email as string) ?? '';
       const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
       return { ...row, hobbies, is_admin: isAdmin, is_demo: false, email_verified: true } as Profile;
     });
 
-    return [...realProfiles, ...INITIAL_PROFILES];
+    // Merge real profiles with initial demo profiles, excluding any duplicates
+    const realIds = new Set(realProfiles.map((p) => p.id));
+    const demoProfiles = INITIAL_PROFILES.filter((p) => !realIds.has(p.id));
+
+    return [...realProfiles, ...demoProfiles];
   } catch (e) {
     console.error('fetchAllProfiles error', e);
     return INITIAL_PROFILES;
@@ -94,7 +131,14 @@ async function fetchUserMessages(supabase: ReturnType<typeof createClient>, user
       .order('created_at', { ascending: true });
 
     if (error || !data) return INITIAL_MESSAGES;
-    return [...INITIAL_MESSAGES, ...data];
+
+    const combined: Message[] = [...INITIAL_MESSAGES];
+    for (const msg of data as Message[]) {
+      if (!combined.some((m) => m.id === msg.id)) {
+        combined.push(msg);
+      }
+    }
+    return combined;
   } catch {
     return INITIAL_MESSAGES;
   }
@@ -116,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const profile = await fetchProfile(supabase, session.user.id);
+        const profile = await fetchProfile(supabase, session.user.id, session.user.email);
         if (profile) setCurrentUser(profile);
         const msgs = await fetchUserMessages(supabase, session.user.id);
         setMessages(msgs);
@@ -137,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session?.user && mounted) {
-          const profile = await fetchProfile(supabase, session.user.id);
+          const profile = await fetchProfile(supabase, session.user.id, session.user.email);
           if (mounted && profile) setCurrentUser(profile);
 
           const msgs = await fetchUserMessages(supabase, session.user.id);
@@ -159,9 +203,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
 
-      if (event === 'SIGNED_IN' && session?.user) {
-        const profile = await fetchProfile(supabase, session.user.id);
-        setCurrentUser(profile);
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
+        const profile = await fetchProfile(supabase, session.user.id, session.user.email);
+        if (profile) setCurrentUser(profile);
         const allProfiles = await fetchAllProfiles(supabase);
         setProfiles(allProfiles);
         const msgs = await fetchUserMessages(supabase, session.user.id);
@@ -175,7 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (event === 'TOKEN_REFRESHED' && session?.user) {
-        const profile = await fetchProfile(supabase, session.user.id);
+        const profile = await fetchProfile(supabase, session.user.id, session.user.email);
         if (profile) setCurrentUser(profile);
       }
     });
@@ -189,7 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         (payload) => {
           const newMsg = payload.new as Message;
           setMessages((prev) => {
-            if (prev.find(m => m.id === newMsg.id)) return prev;
+            if (prev.find((m) => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
           });
         }
@@ -207,13 +251,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ─── Auth actions ──────────────────────────────────────────────────────────
 
   const login = async (email: string, password: string) => {
+    const cleanEmail = email.trim().toLowerCase();
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
+      email: cleanEmail,
       password,
     });
 
     if (error) {
-      // Friendly message for unverified email
       if (error.message.toLowerCase().includes('email not confirmed')) {
         return { error: 'Please verify your email first. Check your inbox for the confirmation link.' };
       }
@@ -221,8 +265,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (data.user) {
-      const profile = await fetchProfile(supabase, data.user.id);
+      const profile = await fetchProfile(supabase, data.user.id, data.user.email);
       if (profile) setCurrentUser(profile);
+      const msgs = await fetchUserMessages(supabase, data.user.id);
+      setMessages(msgs);
+      const allProfiles = await fetchAllProfiles(supabase);
+      setProfiles(allProfiles);
     }
 
     return {};
@@ -231,7 +279,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signup = async (email: string, password: string) => {
     const cleanEmail = email.trim().toLowerCase();
 
-    // Check if account already exists with this email
+    // 1. Check if account already exists with this email in profiles
     const { data: existingProfiles } = await supabase
       .from('profiles')
       .select('id')
@@ -242,11 +290,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: 'An account with this email already exists. Please log in.' };
     }
 
+    // 2. Perform Supabase signup
     const { data, error } = await supabase.auth.signUp({
       email: cleanEmail,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
       },
     });
 
@@ -254,19 +303,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: error.message };
     }
 
-    // Check for duplicate signups where Supabase returns empty identities
-    if (data?.user && data.user.identities && data.user.identities.length === 0) {
+    // 3. Supabase returns empty identities array if user was already registered
+    if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
       return { error: 'An account with this email already exists. Please log in instead.' };
     }
 
     return { requiresEmailConfirm: true };
   };
 
-
-
   const logout = async () => {
     setIsLogingOut(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     await supabase.auth.signOut();
     setCurrentUser(null);
     setIsLogingOut(false);
@@ -274,6 +321,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // ─── Profile actions ───────────────────────────────────────────────────────
+
+  const uploadAvatar = async (file: File): Promise<{ url?: string; error?: string }> => {
+    if (!currentUser) return { error: 'Not logged in' };
+    try {
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${currentUser.id}/avatar_${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) {
+        console.warn('Storage upload warning, using data URL fallback:', uploadError.message);
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve({ url: e.target?.result as string });
+          reader.onerror = () => resolve({ error: 'Failed to read image file.' });
+          reader.readAsDataURL(file);
+        });
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      return { url: publicUrl };
+    } catch (err) {
+      console.error('Avatar upload exception:', err);
+      return { error: 'Failed to upload photo.' };
+    }
+  };
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!currentUser) return;
@@ -284,25 +362,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { hobbies: _hobbies, is_demo: _demo, is_admin: _admin, ...safeUpdates } = updates as Record<string, unknown>;
 
-    // Use upsert so it works even if the trigger-created profile row is missing
+    // Upsert into Supabase profiles table
     const { error } = await supabase
       .from('profiles')
-      .upsert({ id: currentUser.id, ...safeUpdates, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+      .upsert(
+        {
+          id: currentUser.id,
+          email: currentUser.email,
+          ...safeUpdates,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
 
     if (error) {
       console.error('Profile upsert error:', error.message, error.details);
     }
 
+    // Sync hobbies to profile_hobbies
     if (updates.hobbies && Array.isArray(updates.hobbies)) {
       const { error: delError } = await supabase.from('profile_hobbies').delete().eq('profile_id', currentUser.id);
       if (delError) console.error('Hobby delete error:', delError.message);
+
       const rows = (updates.hobbies as Hobby[])
-        .filter((h) => typeof h === 'object' && h.id < 90)
+        .filter((h) => typeof h === 'object' && h && typeof h.id === 'number' && h.id < 90)
         .map((h) => ({ profile_id: currentUser.id, hobby_id: h.id }));
+
       if (rows.length > 0) {
-        await supabase.from('profile_hobbies').insert(rows);
+        const { error: insError } = await supabase.from('profile_hobbies').insert(rows);
+        if (insError) console.error('Hobby insert error:', insError.message);
       }
     }
+
+    // Reload latest profiles
+    const refreshed = await fetchProfile(supabase, currentUser.id, currentUser.email);
+    if (refreshed) setCurrentUser(refreshed);
 
     const allProfiles = await fetchAllProfiles(supabase);
     setProfiles(allProfiles);
@@ -316,7 +410,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     await supabase
       .from('profiles')
-      .update({ id_card_url: idCardDataUrl, verification_status: 'pending' })
+      .update({ id_card_url: idCardDataUrl, verification_status: 'pending', updated_at: new Date().toISOString() })
       .eq('id', currentUser.id);
 
     const allProfiles = await fetchAllProfiles(supabase);
@@ -325,13 +419,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateVerificationStatus = async (userId: string, status: VerificationStatus) => {
     try {
-      // 1. Update in local state immediately
       setProfiles((prev) => prev.map((p) => (p.id === userId ? { ...p, verification_status: status } : p)));
       if (currentUser?.id === userId) {
         setCurrentUser((prev) => (prev ? { ...prev, verification_status: status } : prev));
       }
 
-      // 2. Persist to Supabase
       const { error } = await supabase
         .from('profiles')
         .update({ verification_status: status, updated_at: new Date().toISOString() })
@@ -365,7 +457,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Optimistic UI update
     setMessages((prev) => [...prev, newMsg]);
 
-    // Check if receiverId is a valid UUID (real user)
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(receiverId);
 
     if (isUuid) {
@@ -399,6 +490,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signup,
         logout,
         updateProfile,
+        uploadAvatar,
         submitVerification,
         updateVerificationStatus,
         sendMessage,
