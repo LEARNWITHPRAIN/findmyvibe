@@ -69,19 +69,30 @@ function MyProfileContent() {
       setAvatarPreview(currentUser.avatar_url || null);
 
       if (currentUser.hobbies && currentUser.hobbies.length > 0) {
-        const standardIds = currentUser.hobbies
-          .filter((h) => typeof h !== 'string' && h.id && h.id < 90)
-          .map((h) => (typeof h === 'string' ? 6 : h.id));
-        const customNames = currentUser.hobbies
-          .filter((h) => typeof h === 'string' || (h.id && h.id >= 90) || (h.id === 6 && h.name !== 'Other'))
-          .map((h) => (typeof h === 'string' ? h : h.name));
+        const STANDARD_HOBBY_NAMES = ['Dancing', 'Singing', 'Coding', 'Fitness', 'Athletics'];
+        
+        // Find standard hobby IDs
+        const standardHobbyObjects = currentUser.hobbies.filter((h) => {
+          const name = typeof h === 'string' ? h : h?.name;
+          return name && STANDARD_HOBBY_NAMES.includes(name);
+        });
+        const standardIds = standardHobbyObjects
+          .map((h) => (typeof h === 'string' ? null : h?.id))
+          .filter((id): id is number => typeof id === 'number');
 
-        setSelectedHobbyIds(standardIds.length > 0 ? standardIds : [1, 3]);
+        // Find custom hobby names
+        const customHobbyObjects = currentUser.hobbies.filter((h) => {
+          const name = typeof h === 'string' ? h : h?.name;
+          return name && !STANDARD_HOBBY_NAMES.includes(name) && name !== 'Other';
+        });
+        const customNames = customHobbyObjects.map((h) => (typeof h === 'string' ? h : h.name));
+
+        const finalStandardIds = standardIds.length > 0 ? standardIds : [1, 3];
         if (customNames.length > 0) {
           setCustomInterests(customNames);
-          if (!standardIds.includes(6)) {
-            setSelectedHobbyIds((prev) => [...prev, 6]);
-          }
+          setSelectedHobbyIds([...finalStandardIds, 6]);
+        } else {
+          setSelectedHobbyIds(finalStandardIds);
         }
       }
     }
