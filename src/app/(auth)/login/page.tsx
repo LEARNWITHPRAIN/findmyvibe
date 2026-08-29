@@ -34,7 +34,11 @@ function LoginForm() {
       if (res.error) {
         setError(res.error);
       } else {
-        router.push('/discover');
+        if (res.isProfileComplete === false) {
+          router.push('/me?setup=1');
+        } else {
+          router.push('/discover');
+        }
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to login');

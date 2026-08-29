@@ -9,8 +9,8 @@ export async function GET(request: Request) {
     const supabase = createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Redirect to login with verified flag so user sees success message
-      return NextResponse.redirect(`${origin}/login?verified=1`);
+      // Redirect directly to the profile setup page so the user completes mandatory profile fields
+      return NextResponse.redirect(`${origin}/me?setup=1&verified=1`);
     }
   }
 

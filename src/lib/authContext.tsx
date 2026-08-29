@@ -15,7 +15,7 @@ interface AuthContextType {
   messages: Message[];
   isLoading: boolean;
   isLogingOut: boolean;
-  login: (email: string, pass: string) => Promise<{ error?: string }>;
+  login: (email: string, pass: string) => Promise<{ error?: string; profile?: Profile; isProfileComplete?: boolean }>;
   signup: (email: string, pass: string) => Promise<{ error?: string; requiresEmailConfirm?: boolean }>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
@@ -23,6 +23,8 @@ interface AuthContextType {
   submitVerification: (idCardDataUrl: string) => Promise<void>;
   updateVerificationStatus: (userId: string, status: VerificationStatus) => Promise<{ success: boolean; error?: string }>;
   sendMessage: (receiverId: string, content: string) => Promise<{ success: boolean; error?: string }>;
+  editMessage: (messageId: string, newContent: string) => Promise<{ success: boolean; error?: string }>;
+  deleteMessage: (messageId: string) => Promise<{ success: boolean; error?: string }>;
   refreshSession: () => Promise<void>;
 }
 
@@ -246,9 +248,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         (payload) => {
           const newMsg = payload.new as Message;
           setMessages((prev) => {
-            if (prev.find((m) => m.id === newMsg.id)) return prev;
+            if (prev.some((m) => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
           });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'messages' },
+        (payload) => {
+          const updatedMsg = payload.new as Message;
+          setMessages((prev) =>
+            prev.map((m) => (m.id === updatedMsg.id ? { ...m, ...updatedMsg } : m))
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'messages' },
+        (payload) => {
+          const deletedId = (payload.old as { id: string })?.id;
+          if (deletedId) {
+            setMessages((prev) => prev.filter((m) => m.id !== deletedId));
+          }
         }
       )
       .subscribe();
@@ -284,6 +306,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setMessages(msgs);
       const allProfiles = await fetchAllProfiles(supabase);
       setProfiles(allProfiles);
+
+      const isComplete = Boolean(
+        profile?.full_name &&
+        profile?.department &&
+        profile?.year &&
+        profile?.gender &&
+        profile?.hobbies &&
+        profile.hobbies.length > 0
+      );
+
+      return { profile: profile || undefined, isProfileComplete: isComplete };
     }
 
     return {};
@@ -503,28 +536,95 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const sendMessage = async (receiverId: string, content: string) => {
     if (!currentUser) return { success: false, error: 'Please log in first.' };
 
+    const cleanContent = content.trim();
+    if (!cleanContent) return { success: false, error: 'Message cannot be empty.' };
+
+    // Generate valid UUID to match Postgres primary key
+    const messageId =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = (Math.random() * 16) | 0;
+            const v = c === 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+          });
+
     const newMsg: Message = {
-      id: `msg_${Date.now()}`,
+      id: messageId,
       sender_id: currentUser.id,
       receiver_id: receiverId,
-      content: content.trim(),
+      content: cleanContent,
       created_at: new Date().toISOString(),
     };
 
-    // Optimistic UI update
-    setMessages((prev) => [...prev, newMsg]);
+    // Optimistically update message state without duplicate
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === messageId)) return prev;
+      return [...prev, newMsg];
+    });
 
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(receiverId);
 
     if (isUuid) {
       const { error } = await supabase.from('messages').insert({
+        id: messageId,
         sender_id: currentUser.id,
         receiver_id: receiverId,
-        content: content.trim(),
+        content: cleanContent,
       });
 
       if (error) {
         console.error('Message send error:', error.message);
+        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+        return { success: false, error: error.message };
+      }
+    }
+
+    return { success: true };
+  };
+
+  const editMessage = async (messageId: string, newContent: string) => {
+    if (!currentUser) return { success: false, error: 'Please log in first.' };
+
+    const cleanContent = newContent.trim();
+    if (!cleanContent) return { success: false, error: 'Message cannot be empty.' };
+
+    setMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, content: cleanContent, updated_at: new Date().toISOString() } : m))
+    );
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(messageId);
+    if (isUuid) {
+      const { error } = await supabase
+        .from('messages')
+        .update({ content: cleanContent })
+        .eq('id', messageId)
+        .eq('sender_id', currentUser.id);
+
+      if (error) {
+        console.error('Message edit error:', error.message);
+        return { success: false, error: error.message };
+      }
+    }
+
+    return { success: true };
+  };
+
+  const deleteMessage = async (messageId: string) => {
+    if (!currentUser) return { success: false, error: 'Please log in first.' };
+
+    setMessages((prev) => prev.filter((m) => m.id !== messageId));
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(messageId);
+    if (isUuid) {
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('sender_id', currentUser.id);
+
+      if (error) {
+        console.error('Message delete error:', error.message);
         return { success: false, error: error.message };
       }
     }
@@ -551,6 +651,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         submitVerification,
         updateVerificationStatus,
         sendMessage,
+        editMessage,
+        deleteMessage,
         refreshSession,
       }}
     >

@@ -12,6 +12,10 @@ import {
   ShieldCheck,
   Search,
   Camera,
+  Edit2,
+  Trash2,
+  Check,
+  X,
 } from 'lucide-react';
 
 function MessagesContent() {
@@ -19,12 +23,22 @@ function MessagesContent() {
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get('user');
 
-  const { currentUser, profiles, messages, sendMessage, isLoading } = useAuth();
+  const {
+    currentUser,
+    profiles,
+    messages,
+    sendMessage,
+    editMessage,
+    deleteMessage,
+    isLoading,
+  } = useAuth();
 
   const [activePartnerId, setActivePartnerId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [searchFilter, setSearchFilter] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [editInputText, setEditInputText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auth guard
@@ -63,14 +77,38 @@ function MessagesContent() {
     e.preventDefault();
     if (!messageText.trim() || !activePartnerId) return;
 
+    const text = messageText;
+    setMessageText('');
     setIsSending(true);
     try {
-      await sendMessage(activePartnerId, messageText);
-      setMessageText('');
+      await sendMessage(activePartnerId, text);
     } catch (err) {
       console.error(err);
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleStartEdit = (msgId: string, currentContent: string) => {
+    setEditingMsgId(msgId);
+    setEditInputText(currentContent);
+  };
+
+  const handleSaveEdit = async (msgId: string) => {
+    if (!editInputText.trim()) return;
+    await editMessage(msgId, editInputText.trim());
+    setEditingMsgId(null);
+    setEditInputText('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMsgId(null);
+    setEditInputText('');
+  };
+
+  const handleDelete = async (msgId: string) => {
+    if (window.confirm('Unsend this message? It will be removed for everyone.')) {
+      await deleteMessage(msgId);
     }
   };
 
@@ -228,23 +266,87 @@ function MessagesContent() {
                 {threadMessages.length > 0 ? (
                   threadMessages.map((msg) => {
                     const isMine = msg.sender_id === currentUser?.id;
+                    const isEditing = editingMsgId === msg.id;
+
                     return (
                       <div
                         key={msg.id}
-                        className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}
+                        className={`flex flex-col group ${isMine ? 'items-end' : 'items-start'}`}
                       >
-                        <div
-                          className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed ${
-                            isMine
-                              ? 'bg-gradient-to-r from-purple-600 to-teal-600 text-white rounded-br-none shadow-md'
-                              : 'bg-zinc-800/90 text-zinc-100 rounded-bl-none border border-zinc-700/60'
-                          }`}
-                        >
-                          {msg.content}
+                        {isEditing ? (
+                          <div className="w-full max-w-md bg-zinc-900 border border-purple-500/60 rounded-2xl p-2.5 shadow-xl space-y-2">
+                            <input
+                              type="text"
+                              value={editInputText}
+                              onChange={(e) => setEditInputText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveEdit(msg.id);
+                                if (e.key === 'Escape') handleCancelEdit();
+                              }}
+                              autoFocus
+                              className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs sm:text-sm text-zinc-100 focus:outline-none focus:border-teal-400"
+                            />
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold flex items-center gap-1"
+                              >
+                                <X className="w-3 h-3" /> Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSaveEdit(msg.id)}
+                                className="px-3 py-1 rounded-lg bg-gradient-to-r from-purple-600 to-teal-500 text-white text-xs font-bold flex items-center gap-1 shadow-sm"
+                              >
+                                <Check className="w-3 h-3" /> Save
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative flex items-center gap-2 group/bubble">
+                            {/* Actions for my messages (visible on hover) */}
+                            {isMine && (
+                              <div className="opacity-0 group-hover/bubble:opacity-100 transition-opacity flex items-center gap-1 bg-zinc-900/90 border border-zinc-800 px-1.5 py-1 rounded-xl shadow-md">
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartEdit(msg.id, msg.content)}
+                                  title="Edit message"
+                                  className="p-1 rounded-lg text-zinc-400 hover:text-purple-300 hover:bg-zinc-800 transition-colors"
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(msg.id)}
+                                  title="Unsend / Delete message"
+                                  className="p-1 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 transition-colors"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+
+                            <div
+                              className={`max-w-[80vw] sm:max-w-md rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed ${
+                                isMine
+                                  ? 'bg-gradient-to-r from-purple-600 to-teal-600 text-white rounded-br-none shadow-md'
+                                  : 'bg-zinc-800/90 text-zinc-100 rounded-bl-none border border-zinc-700/60'
+                              }`}
+                            >
+                              {msg.content}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 mt-1 px-1">
+                          <span>
+                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {msg.updated_at && (
+                            <span className="text-[9px] text-zinc-600 italic">(edited)</span>
+                          )}
                         </div>
-                        <span className="text-[10px] text-zinc-500 mt-1 px-1">
-                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
                       </div>
                     );
                   })

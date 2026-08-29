@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { HobbyBadge } from '@/components/HobbyBadge';
 import { DepartmentDropdown } from '@/components/DepartmentDropdown';
@@ -17,29 +17,35 @@ import {
   Save,
   AlertCircle,
   ImagePlus,
-  ExternalLink,
   Smile,
   Plus,
   X,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import { Hobby } from '@/lib/types';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB
 
-export default function MyProfilePage() {
+function MyProfileContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isSetupFlow = searchParams.get('setup') === '1';
+  const isEmailVerifiedRedirect = searchParams.get('verified') === '1';
+
   const { currentUser, hobbies, updateProfile, uploadAvatar, isLoading } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [department, setDepartment] = useState('');
   const [year, setYear] = useState('2');
-  const [gender, setGender] = useState('Prefer not to say');
+  const [gender, setGender] = useState('Male');
   const [bio, setBio] = useState('');
   const [selectedHobbyIds, setSelectedHobbyIds] = useState<number[]>([]);
   const [customInterests, setCustomInterests] = useState<string[]>([]);
   const [customInputText, setCustomInputText] = useState('');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showSavedToast, setShowSavedToast] = useState(false);
@@ -57,8 +63,8 @@ export default function MyProfilePage() {
     if (currentUser) {
       setFullName(currentUser.full_name || '');
       setDepartment(currentUser.department || '');
-      setYear(currentUser.year || '2');
-      setGender(currentUser.gender || 'Prefer not to say');
+      setYear(currentUser.year || '1');
+      setGender(currentUser.gender || 'Male');
       setBio(currentUser.bio || '');
       setAvatarPreview(currentUser.avatar_url || null);
 
@@ -70,7 +76,7 @@ export default function MyProfilePage() {
           .filter((h) => typeof h === 'string' || (h.id && h.id >= 90) || (h.id === 6 && h.name !== 'Other'))
           .map((h) => (typeof h === 'string' ? h : h.name));
 
-        setSelectedHobbyIds(standardIds);
+        setSelectedHobbyIds(standardIds.length > 0 ? standardIds : [1, 3]);
         if (customNames.length > 0) {
           setCustomInterests(customNames);
           if (!standardIds.includes(6)) {
@@ -134,6 +140,30 @@ export default function MyProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
+    // Mandatory validation (All fields mandatory except bio + min 1 hobby)
+    if (!fullName.trim()) {
+      setFormError('Full Name is mandatory.');
+      return;
+    }
+    if (!department.trim()) {
+      setFormError('Department / Course is mandatory. Please select your course.');
+      return;
+    }
+    if (!year) {
+      setFormError('Year of Study is mandatory.');
+      return;
+    }
+    if (!gender) {
+      setFormError('Gender selection is mandatory.');
+      return;
+    }
+    if (selectedHobbyIds.length === 0 && customInterests.length === 0) {
+      setFormError('Please select at least 1 hobby or interest tag.');
+      return;
+    }
+
     setIsSaving(true);
 
     const baseHobbies = hobbies.filter((h) => selectedHobbyIds.includes(h.id) && h.id !== 6);
@@ -169,8 +199,14 @@ export default function MyProfilePage() {
 
       setShowSavedToast(true);
       setTimeout(() => setShowSavedToast(false), 3500);
+
+      if (isSetupFlow) {
+        // Direct forward to verification or discover
+        router.push('/verify-id');
+      }
     } catch (err) {
       console.error(err);
+      setFormError('Failed to save profile. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -189,11 +225,28 @@ export default function MyProfilePage() {
 
   return (
     <div className="min-h-[85vh] py-8 px-4 sm:px-6 max-w-3xl mx-auto space-y-6">
+      {/* Setup / Verification Banner */}
+      {(isSetupFlow || isEmailVerifiedRedirect) && (
+        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-purple-950/80 via-zinc-900 to-teal-950/80 border border-teal-500/40 shadow-xl flex items-start gap-3.5 animate-in fade-in slide-in-from-top-4">
+          <div className="w-10 h-10 rounded-2xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center text-teal-300 shrink-0">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm sm:text-base font-bold text-white">
+              {isEmailVerifiedRedirect ? 'Email Verified Successfully! 🎉' : 'Complete Your Student Profile'}
+            </h3>
+            <p className="text-xs text-zinc-300 mt-0.5 leading-relaxed">
+              Please fill out all mandatory fields below (Name, Department, Year, Gender, and at least 1 Interest) to join the CSJMU network.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Toast */}
       {showSavedToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-emerald-500 text-zinc-950 px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl flex items-center gap-2 animate-in slide-in-from-bottom-5">
           <CheckCircle2 className="w-4 h-4" />
-          <span>Profile updated successfully!</span>
+          <span>Profile saved successfully!</span>
         </div>
       )}
 
@@ -283,19 +336,34 @@ export default function MyProfilePage() {
 
       {/* Edit Profile Form */}
       <div className="bg-zinc-900/70 border border-zinc-800 rounded-3xl p-5 sm:p-8 backdrop-blur-xl shadow-2xl">
-        <h3 className="text-lg font-black text-white mb-6">Edit Your Profile</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-black text-white">Student Profile Information</h3>
+          <span className="text-xs text-zinc-400 font-medium">
+            <span className="text-rose-400">*</span> Required fields
+          </span>
+        </div>
+
+        {formError && (
+          <div className="mb-5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{formError}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSave} className="space-y-5">
           {/* Full Name */}
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Full Name</label>
+            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+              Full Name <span className="text-rose-400">*</span>
+            </label>
             <div className="relative">
               <User className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 focus:outline-none transition-colors"
+                placeholder="e.g. Priyanshu Sharma"
+                className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors"
                 required
               />
             </div>
@@ -303,37 +371,45 @@ export default function MyProfilePage() {
 
           {/* Department Dropdown */}
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Department / Course</label>
+            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+              Department / Course <span className="text-rose-400">*</span>
+            </label>
             <DepartmentDropdown value={department} onChange={setDepartment} required />
           </div>
 
           {/* Year & Gender */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Year of Study</label>
+              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                Year of Study <span className="text-rose-400">*</span>
+              </label>
               <div className="relative">
                 <Calendar className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <select
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
                   className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 focus:outline-none transition-colors appearance-none cursor-pointer"
+                  required
                 >
-                  <option value="1">1st Year</option>
-                  <option value="2">2nd Year</option>
-                  <option value="3">3rd Year</option>
-                  <option value="4">4th Year</option>
+                  <option value="1">1st Year (Fresher)</option>
+                  <option value="2">2nd Year (Sophomore)</option>
+                  <option value="3">3rd Year (Junior)</option>
+                  <option value="4">4th Year (Senior / Final)</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Gender</label>
+              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+                Gender <span className="text-rose-400">*</span>
+              </label>
               <div className="relative">
                 <Smile className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <select
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
                   className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 focus:outline-none transition-colors appearance-none cursor-pointer"
+                  required
                 >
                   <option value="Male">👦 Male</option>
                   <option value="Female">👧 Female</option>
@@ -344,23 +420,29 @@ export default function MyProfilePage() {
             </div>
           </div>
 
-          {/* Bio */}
+          {/* Bio (Optional) */}
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Bio / Your Vibe</label>
+            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
+              Bio / Your Vibe <span className="text-zinc-500 font-normal">(Optional)</span>
+            </label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={3}
-              placeholder="Tell fellow students about yourself, your hobbies, clubs you're in..."
+              placeholder="Tell fellow CSJMU batchmates about yourself, campus clubs, startup ideas..."
               className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors resize-none"
             />
           </div>
 
           {/* Hobbies Selection */}
           <div>
-            <label className="block text-xs font-semibold text-zinc-300 mb-2">
-              My Hobbies & Interests
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-semibold text-zinc-300">
+                My Hobbies & Interests <span className="text-rose-400">*</span>
+              </label>
+              <span className="text-[11px] text-zinc-500">Pick at least 1</span>
+            </div>
+
             <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 flex flex-wrap gap-2">
               {hobbies.map((hobby) => {
                 const isSelected = selectedHobbyIds.includes(hobby.id);
@@ -438,18 +520,51 @@ export default function MyProfilePage() {
             )}
           </div>
 
-          <div className="pt-2">
+          <div className="pt-3 border-t border-zinc-800 flex items-center justify-between">
+            {isSetupFlow ? (
+              <p className="text-xs text-zinc-500 hidden sm:block">
+                Next: Submit student ID for verification
+              </p>
+            ) : (
+              <Link href="/discover" className="text-xs text-zinc-400 hover:text-white">
+                ← Back to Discover
+              </Link>
+            )}
+
             <button
               type="submit"
-              disabled={isSaving}
+              disabled={isSaving || !fullName.trim() || !department.trim() || (selectedHobbyIds.length === 0 && customInterests.length === 0)}
               className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-rose-500 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-bold text-sm shadow-glow-purple flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
             >
-              <Save className="w-4 h-4" />
-              <span>{isSaving ? 'Saving Changes...' : 'Save Profile Changes'}</span>
+              {isSaving ? (
+                <span>Saving Profile...</span>
+              ) : isSetupFlow ? (
+                <>
+                  <span>Save & Continue</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>Save Profile Changes</span>
+                </>
+              )}
             </button>
           </div>
         </form>
       </div>
     </div>
+  );
+}
+
+export default function MyProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl border-2 border-purple-500/50 border-t-purple-400 animate-spin" />
+      </div>
+    }>
+      <MyProfileContent />
+    </Suspense>
   );
 }
