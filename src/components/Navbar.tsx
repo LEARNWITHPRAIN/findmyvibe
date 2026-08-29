@@ -16,6 +16,9 @@ import {
   Layers,
   Info,
   MessageSquarePlus,
+  Mail,
+  Lock,
+  FileText,
 } from 'lucide-react';
 import { FeedbackModal } from './FeedbackModal';
 
@@ -242,6 +245,17 @@ export default function Navbar() {
             About Community
           </Link>
 
+          <Link
+            href="/contact"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              isActive('/contact') ? 'bg-zinc-800 text-white' : 'text-zinc-200 hover:bg-zinc-900'
+            }`}
+          >
+            <Mail className="w-4 h-4 text-teal-400" />
+            Contact Us
+          </Link>
+
           <button
             onClick={() => {
               setMobileMenuOpen(false);
@@ -252,6 +266,28 @@ export default function Navbar() {
             <MessageSquarePlus className="w-4 h-4 text-teal-400" />
             Give Feedback / Report Bug
           </button>
+
+          <Link
+            href="/privacy"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              isActive('/privacy') ? 'bg-zinc-800 text-white' : 'text-zinc-200 hover:bg-zinc-900'
+            }`}
+          >
+            <Lock className="w-4 h-4 text-teal-400" />
+            Privacy Policy
+          </Link>
+
+          <Link
+            href="/terms"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              isActive('/terms') ? 'bg-zinc-800 text-white' : 'text-zinc-200 hover:bg-zinc-900'
+            }`}
+          >
+            <FileText className="w-4 h-4 text-purple-400" />
+            Terms & Conditions
+          </Link>
 
           {isAdmin && (
             <Link

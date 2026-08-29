@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { FeedbackModal } from './FeedbackModal';
 import {
   MessageSquarePlus,
@@ -18,6 +19,14 @@ import {
 
 export function Footer() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Only render footer on the main landing page ('/')
+  if (pathname !== '/') {
+    return (
+      <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+    );
+  }
 
   return (
     <>
