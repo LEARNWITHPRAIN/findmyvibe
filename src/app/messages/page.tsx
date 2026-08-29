@@ -115,7 +115,7 @@ function MessagesContent() {
             {profiles.filter(
               (p) =>
                 p.id !== currentUser?.id &&
-                (searchFilter ? p.full_name.toLowerCase().includes(searchFilter.toLowerCase()) : true)
+                (searchFilter ? (p.full_name || '').toLowerCase().includes(searchFilter.toLowerCase()) : true)
             ).length === 0 && (
               <div className="flex flex-col items-center justify-center h-full py-10 px-4 text-center space-y-2">
                 <MessageSquare className="w-8 h-8 text-zinc-700 mx-auto" />
@@ -132,7 +132,7 @@ function MessagesContent() {
               .filter(
                 (p) =>
                   p.id !== currentUser?.id &&
-                  (searchFilter ? p.full_name.toLowerCase().includes(searchFilter.toLowerCase()) : true)
+                  (searchFilter ? (p.full_name || '').toLowerCase().includes(searchFilter.toLowerCase()) : true)
               )
               .map((profile) => {
                 const isSelected = profile.id === activePartnerId;
@@ -156,9 +156,9 @@ function MessagesContent() {
                   >
                     <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-zinc-800 shrink-0 flex items-center justify-center font-bold text-xs">
                       {isVerified && profile.avatar_url ? (
-                        <Image src={profile.avatar_url} alt={profile.full_name} fill className="object-cover" unoptimized />
+                        <Image src={profile.avatar_url} alt={profile.full_name || 'Student'} fill className="object-cover" unoptimized />
                       ) : (
-                        <span>{profile.full_name.charAt(0)}</span>
+                        <span>{(profile.full_name || 'U').charAt(0).toUpperCase()}</span>
                       )}
                       {profile.verification_status === 'verified' && (
                         <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-zinc-950 z-10" />
@@ -168,7 +168,7 @@ function MessagesContent() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
                         <span className="font-semibold text-xs text-white truncate">
-                          {profile.full_name}
+                          {profile.full_name || 'CSJMU Student'}
                         </span>
                         {lastMsg && (
                           <span className="text-[10px] text-zinc-500">

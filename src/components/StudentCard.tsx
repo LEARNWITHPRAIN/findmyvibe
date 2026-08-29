@@ -31,14 +31,14 @@ export function StudentCard({ profile }: StudentCardProps) {
               {isViewerVerified && profile.avatar_url ? (
                 <Image
                   src={profile.avatar_url}
-                  alt={profile.full_name}
+                  alt={profile.full_name || 'Student'}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                   unoptimized
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-purple-900/40 via-zinc-800 to-teal-900/40 flex items-center justify-center text-zinc-300 font-bold text-lg">
-                  {profile.full_name.charAt(0).toUpperCase()}
+                  {(profile.full_name || 'U').charAt(0).toUpperCase()}
                 </div>
               )}
 
@@ -60,7 +60,7 @@ export function StudentCard({ profile }: StudentCardProps) {
                   href={`/profile/${profile.id}`}
                   className="font-bold text-zinc-100 hover:text-purple-400 text-base truncate transition-colors flex items-center gap-1"
                 >
-                  {profile.full_name}
+                  {profile.full_name || 'CSJMU Student'}
                   <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400" />
                 </Link>
                 {profile.verification_status === 'verified' && (
@@ -111,7 +111,7 @@ export function StudentCard({ profile }: StudentCardProps) {
           <div className="flex flex-wrap gap-1.5">
             {profile.hobbies && profile.hobbies.length > 0 ? (
               profile.hobbies.map((hobby) => (
-                <HobbyBadge key={typeof hobby === 'string' ? hobby : hobby.id} hobby={hobby} size="sm" />
+                <HobbyBadge key={typeof hobby === 'string' ? hobby : hobby?.id || hobby?.name || Math.random()} hobby={hobby} size="sm" />
               ))
             ) : (
               <span className="text-xs text-zinc-600 italic">No hobbies added yet</span>

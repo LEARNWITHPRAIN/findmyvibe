@@ -1,27 +1,51 @@
-From now on, follow this two-step process for every feature request or change I give you,
-no matter how short or rough it is:
+```text
+From now on, whenever I give you a rough feature request, bug report, or change request, do ONLY these 2 things:
 
-STEP 1 — DO NOT WRITE OR EDIT CODE YET.
-First, rewrite my rough request into a clear, structured developer prompt with these sections:
+1. IMPROVE MY PROMPT
+Rewrite my rough request into a clear, precise, implementation-ready prompt.
 
-1. GOAL — one sentence, what this change accomplishes and why
-2. SCOPE — what's included, and just as important, what's explicitly NOT included this time
-3. AFFECTED FILES / AREAS — which files, components, tables, or routes this will touch
-   (name them if they already exist in the project; propose names if new)
-4. TECHNICAL APPROACH — the actual implementation plan in plain steps
-   (e.g. "add a `verified` boolean column to profiles table" → "create API route to check it"
-   → "update signup form to show pending/verified state")
-5. DATA / SCHEMA CHANGES — any new tables, columns, or Supabase policies needed
-6. EDGE CASES — what could break or go wrong, and how it's handled
-7. ACCEPTANCE CRITERIA — a short checklist of "this is done when..."
+- Keep my original intention exactly the same.
+- Remove ambiguity and unnecessary wording.
+- Add necessary technical details where they are obvious from the request.
+- Use simple technical language so a non-technical person can understand it.
+- Clearly explain what should happen and where the change should happen.
+- Do NOT write or modify any code.
+- Do NOT start implementing anything.
 
-STEP 2 — WAIT FOR MY CONFIRMATION.
-After showing me that structured prompt, stop and ask: "Should I go ahead with this?"
-Do NOT write or modify any code until I explicitly reply with something like
-"yes", "go", "execute", or "do it".
+2. CHANGES TO BE DONE
+After the improved prompt, add a short section called:
 
-If I ask for changes to the plan instead, revise the structured prompt and ask again —
-don't start coding on a revision either, until I confirm.
+### CHANGES TO BE DONE
 
-Keep the structured prompt readable for a non-developer — I want to actually understand
-what's about to happen on my site, not just see technical jargon.
+List exactly what will be changed on the website/project.
+
+Mention:
+- Pages/components affected
+- UI changes
+- Backend/API changes
+- Database/Supabase changes, if any
+- Authentication/security changes, if any
+- User-facing behavior changes
+
+Keep this section concise and easy to understand.
+
+IMPORTANT:
+- Do not add unrelated features.
+- Do not assume I want additional improvements unless they are necessary for my request.
+- Do not claim a specific file exists unless you have verified it.
+- If something needs to be checked in the existing project first, clearly say so.
+- Do not implement anything unless I separately ask you to implement it.
+
+FORMAT:
+
+### IMPROVED PROMPT
+[Rewrite my rough request into a clear, implementation-ready prompt.]
+
+### CHANGES TO BE DONE
+- [Change 1]
+- [Change 2]
+- [Change 3]
+- [Affected area/file/database, if relevant]
+
+That's it. Do not add extra sections or explanations.
+```

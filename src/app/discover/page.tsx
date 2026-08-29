@@ -42,16 +42,19 @@ export default function DiscoverPage() {
     // Search query match
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const nameMatch = profile.full_name.toLowerCase().includes(q);
-      const deptMatch = isVerified && profile.department?.toLowerCase().includes(q);
-      const bioMatch = profile.bio?.toLowerCase().includes(q);
+      const fullName = (profile.full_name || '').toLowerCase();
+      const dept = (profile.department || '').toLowerCase();
+      const bio = (profile.bio || '').toLowerCase();
+      const nameMatch = fullName.includes(q);
+      const deptMatch = isVerified && dept.includes(q);
+      const bioMatch = bio.includes(q);
       if (!nameMatch && !deptMatch && !bioMatch) return false;
     }
 
     // Hobby match
     if (selectedHobby) {
       const hasHobby = profile.hobbies?.some((h) =>
-        typeof h === 'string' ? h === selectedHobby : h.name === selectedHobby
+        typeof h === 'string' ? h === selectedHobby : h?.name === selectedHobby
       );
       if (!hasHobby) return false;
     }

@@ -49,7 +49,7 @@ async function fetchProfile(
 
     // If profile row doesn't exist yet, insert a default one
     if (!data && fallbackEmail) {
-      const defaultName = fallbackEmail.split('@')[0];
+      const defaultName = fallbackEmail.split('@')[0] || 'CSJMU Student';
       await supabase.from('profiles').upsert(
         {
           id: userId,
@@ -73,14 +73,23 @@ async function fetchProfile(
 
     if (!data) return null;
 
-    const hobbies: Hobby[] = ((data.profile_hobbies as { hobby: Hobby }[]) ?? [])
+    const hobbies: Hobby[] = (((data.profile_hobbies as { hobby: Hobby }[]) ?? [])
       .filter((ph) => ph && ph.hobby)
-      .map((ph) => ph.hobby);
+      .map((ph) => ph.hobby));
 
     const email = (data.email ?? fallbackEmail ?? '').toLowerCase();
     const isAdmin = email === ADMIN_EMAIL.toLowerCase();
+    const fullName = data.full_name?.trim() || (email ? email.split('@')[0] : 'CSJMU Student');
 
-    return { ...data, hobbies, is_admin: isAdmin, email_verified: true } as Profile;
+    return {
+      ...data,
+      full_name: fullName,
+      email: email || data.email,
+      hobbies: Array.isArray(hobbies) ? hobbies : [],
+      verification_status: data.verification_status || 'unverified',
+      is_admin: isAdmin,
+      email_verified: true,
+    } as Profile;
   } catch (e) {
     console.error('fetchProfile exception:', e);
     return null;
@@ -103,9 +112,21 @@ async function fetchAllProfiles(supabase: ReturnType<typeof createClient>): Prom
       const hobbies: Hobby[] = (((row.profile_hobbies as { hobby: Hobby }[]) ?? [])
         .filter((ph) => ph && ph.hobby)
         .map((ph) => ph.hobby));
-      const email = (row.email as string) ?? '';
-      const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-      return { ...row, hobbies, is_admin: isAdmin, is_demo: false, email_verified: true } as Profile;
+      const email = ((row.email as string) ?? '').toLowerCase();
+      const isAdmin = email === ADMIN_EMAIL.toLowerCase();
+      const rawName = (row.full_name as string) || '';
+      const fullName = rawName.trim() || (email ? email.split('@')[0] : 'CSJMU Student');
+
+      return {
+        ...row,
+        full_name: fullName,
+        email: email || (row.email as string),
+        hobbies: Array.isArray(hobbies) ? hobbies : [],
+        verification_status: (row.verification_status as string) || 'unverified',
+        is_admin: isAdmin,
+        is_demo: false,
+        email_verified: true,
+      } as Profile;
     });
 
     // Return ONLY real Supabase profiles — no demo/mock data

@@ -76,14 +76,14 @@ export default function ProfileDetailPage() {
               {isViewerVerified && profile.avatar_url ? (
                 <Image
                   src={profile.avatar_url}
-                  alt={profile.full_name}
+                  alt={profile.full_name || 'Student'}
                   fill
                   className="object-cover"
                   unoptimized
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-purple-900/60 to-teal-900/60 flex items-center justify-center text-zinc-200 font-extrabold text-3xl">
-                  {profile.full_name.charAt(0).toUpperCase()}
+                  {(profile.full_name || 'U').charAt(0).toUpperCase()}
                 </div>
               )}
 

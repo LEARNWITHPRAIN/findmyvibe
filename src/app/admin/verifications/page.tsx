@@ -71,11 +71,10 @@ export default function AdminVerificationsPage() {
     if (filterStatus !== 'all' && p.verification_status !== filterStatus) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      return (
-        p.full_name.toLowerCase().includes(q) ||
-        p.department?.toLowerCase().includes(q) ||
-        p.email?.toLowerCase().includes(q)
-      );
+      const fullName = (p.full_name || '').toLowerCase();
+      const dept = (p.department || '').toLowerCase();
+      const email = (p.email || '').toLowerCase();
+      return fullName.includes(q) || dept.includes(q) || email.includes(q);
     }
     return true;
   });
@@ -297,16 +296,16 @@ export default function AdminVerificationsPage() {
             <div className="flex items-center gap-3.5 min-w-0">
               <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700/80 shrink-0 overflow-hidden flex items-center justify-center font-bold text-xs relative">
                 {profile.avatar_url ? (
-                  <Image src={profile.avatar_url} alt={profile.full_name} fill className="object-cover" unoptimized />
+                  <Image src={profile.avatar_url} alt={profile.full_name || 'Student'} fill className="object-cover" unoptimized />
                 ) : (
-                  <span>{profile.full_name.charAt(0)}</span>
+                  <span>{(profile.full_name || 'U').charAt(0).toUpperCase()}</span>
                 )}
               </div>
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <h3 className="font-bold text-white text-sm truncate">
-                    {profile.full_name}
+                    {profile.full_name || 'CSJMU Student'}
                   </h3>
                   {profile.verification_status === 'verified' && (
                     <span className="bg-teal-500/20 text-teal-400 border border-teal-500/40 text-[10px] font-bold px-2 py-0.2 rounded-full">
