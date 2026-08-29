@@ -291,11 +291,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // 2. Perform Supabase signup
+    // Always use the production site URL so the email link works outside localhost
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://findmyvibe.fun';
     const { data, error } = await supabase.auth.signUp({
       email: cleanEmail,
       password,
       options: {
-        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
+        emailRedirectTo: `${siteUrl}/auth/callback`,
       },
     });
 
