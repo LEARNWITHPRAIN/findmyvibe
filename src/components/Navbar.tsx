@@ -177,6 +177,16 @@ export default function Navbar() {
 
           {/* Mobile menu toggle */}
           <div className="flex md:hidden items-center gap-2">
+            {/* Show avatar initials on mobile when logged in */}
+            {currentUser && (
+              <Link href="/me" className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-teal-400 text-zinc-950 flex items-center justify-center font-bold text-xs overflow-hidden">
+                {currentUser.avatar_url ? (
+                  <Image src={currentUser.avatar_url} alt={currentUser.full_name} width={32} height={32} className="object-cover w-full h-full" unoptimized />
+                ) : (
+                  currentUser.full_name?.charAt(0) || 'U'
+                )}
+              </Link>
+            )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900"

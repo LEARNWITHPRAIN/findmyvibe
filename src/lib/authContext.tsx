@@ -97,7 +97,7 @@ async function fetchAllProfiles(supabase: ReturnType<typeof createClient>): Prom
       .select('*, profile_hobbies(hobby:hobbies(*))')
       .order('created_at', { ascending: false });
 
-    if (error || !data || data.length === 0) return INITIAL_PROFILES;
+    if (error || !data) return [];
 
     const realProfiles: Profile[] = data.map((row: Record<string, unknown>) => {
       const hobbies: Hobby[] = (((row.profile_hobbies as { hobby: Hobby }[]) ?? [])
@@ -108,14 +108,11 @@ async function fetchAllProfiles(supabase: ReturnType<typeof createClient>): Prom
       return { ...row, hobbies, is_admin: isAdmin, is_demo: false, email_verified: true } as Profile;
     });
 
-    // Merge real profiles with initial demo profiles, excluding any duplicates
-    const realIds = new Set(realProfiles.map((p) => p.id));
-    const demoProfiles = INITIAL_PROFILES.filter((p) => !realIds.has(p.id));
-
-    return [...realProfiles, ...demoProfiles];
+    // Return ONLY real Supabase profiles — no demo/mock data
+    return realProfiles;
   } catch (e) {
     console.error('fetchAllProfiles error', e);
-    return INITIAL_PROFILES;
+    return [];
   }
 }
 
@@ -130,17 +127,12 @@ async function fetchUserMessages(supabase: ReturnType<typeof createClient>, user
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
       .order('created_at', { ascending: true });
 
-    if (error || !data) return INITIAL_MESSAGES;
+    if (error || !data) return [];
 
-    const combined: Message[] = [...INITIAL_MESSAGES];
-    for (const msg of data as Message[]) {
-      if (!combined.some((m) => m.id === msg.id)) {
-        combined.push(msg);
-      }
-    }
-    return combined;
+    // Return only real Supabase messages — no demo/mock messages
+    return data as Message[];
   } catch {
-    return INITIAL_MESSAGES;
+    return [];
   }
 }
 
@@ -150,9 +142,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
 
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
-  const [profiles, setProfiles] = useState<Profile[]>(INITIAL_PROFILES);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [hobbies] = useState<Hobby[]>(INITIAL_HOBBIES);
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLogingOut, setIsLogingOut] = useState(false);
 
@@ -214,8 +206,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
-        setProfiles(INITIAL_PROFILES);
-        setMessages(INITIAL_MESSAGES);
+        setProfiles([]);
+        setMessages([]);
       }
 
       if (event === 'TOKEN_REFRESHED' && session?.user) {

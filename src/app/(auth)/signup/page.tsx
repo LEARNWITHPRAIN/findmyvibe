@@ -3,11 +3,13 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { Mail, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function SignUpPage() {
   const { signup } = useAuth();
+  const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,7 +45,11 @@ export default function SignUpPage() {
       if (res.error) {
         setError(res.error);
       } else {
+        // Show success message briefly, then redirect to onboarding
         setSubmitted(true);
+        setTimeout(() => {
+          router.push('/onboarding');
+        }, 2000);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong during sign up.');
@@ -73,24 +79,19 @@ export default function SignUpPage() {
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">Check Your Inbox!</h2>
+              <h2 className="text-lg font-bold text-white">Account Created! 🎉</h2>
               <p className="text-xs text-zinc-300 leading-relaxed max-w-xs mx-auto mt-2">
-                We&apos;ve sent a verification link to <strong className="text-teal-400">{email}</strong>.
+                Redirecting you to set up your profile now...
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-zinc-950/80 border border-purple-500/30 text-xs text-zinc-400 text-left space-y-2">
-              <p className="font-semibold text-zinc-200">Next Steps:</p>
-              <p>1. Open your email inbox (check Spam if needed).</p>
-              <p>2. Click the confirmation link to verify your account.</p>
-              <p>3. Come back and log in with your email and password!</p>
+              <p className="font-semibold text-zinc-200">📧 Check your inbox too!</p>
+              <p>We sent a verification link to <strong className="text-teal-400">{email}</strong>.</p>
+              <p>Click it to unlock full messaging features after you set up your profile.</p>
             </div>
 
-            <div className="pt-2 border-t border-zinc-800">
-              <Link href="/login" className="text-xs text-purple-400 hover:text-purple-300 font-semibold">
-                Already verified? Go to Log In →
-              </Link>
-            </div>
+            <div className="w-8 h-8 rounded-xl border-2 border-purple-500/50 border-t-purple-400 animate-spin mx-auto" />
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">

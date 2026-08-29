@@ -112,6 +112,22 @@ function MessagesContent() {
 
           {/* Student list */}
           <div className="flex-1 overflow-y-auto divide-y divide-zinc-900">
+            {profiles.filter(
+              (p) =>
+                p.id !== currentUser?.id &&
+                (searchFilter ? p.full_name.toLowerCase().includes(searchFilter.toLowerCase()) : true)
+            ).length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full py-10 px-4 text-center space-y-2">
+                <MessageSquare className="w-8 h-8 text-zinc-700 mx-auto" />
+                <p className="text-xs text-zinc-500 font-semibold">No students yet</p>
+                <p className="text-[11px] text-zinc-600">
+                  Discover students and start a conversation!
+                </p>
+                <Link href="/discover" className="text-[11px] text-teal-400 hover:text-teal-300 font-semibold mt-1">
+                  Go to Discover →
+                </Link>
+              </div>
+            )}
             {profiles
               .filter(
                 (p) =>
