@@ -5,12 +5,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
+import { HobbyBadge } from '@/components/HobbyBadge';
+import { DepartmentDropdown } from '@/components/DepartmentDropdown';
 import {
   User,
-  GraduationCap,
   Calendar,
   ShieldCheck,
-  ShieldAlert,
   Clock,
   Camera,
   CheckCircle2,
@@ -18,7 +18,11 @@ import {
   AlertCircle,
   ImagePlus,
   ExternalLink,
+  Smile,
+  Plus,
+  X,
 } from 'lucide-react';
+import { Hobby } from '@/lib/types';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB
 
@@ -29,9 +33,11 @@ export default function MyProfilePage() {
   const [fullName, setFullName] = useState('');
   const [department, setDepartment] = useState('');
   const [year, setYear] = useState('2');
+  const [gender, setGender] = useState('Prefer not to say');
   const [bio, setBio] = useState('');
-  const [customOther, setCustomOther] = useState('');
   const [selectedHobbyIds, setSelectedHobbyIds] = useState<number[]>([]);
+  const [customInterests, setCustomInterests] = useState<string[]>([]);
+  const [customInputText, setCustomInputText] = useState('');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -52,9 +58,26 @@ export default function MyProfilePage() {
       setFullName(currentUser.full_name || '');
       setDepartment(currentUser.department || '');
       setYear(currentUser.year || '2');
+      setGender(currentUser.gender || 'Prefer not to say');
       setBio(currentUser.bio || '');
       setAvatarPreview(currentUser.avatar_url || null);
-      setSelectedHobbyIds(currentUser.hobbies?.map((h) => h.id) || []);
+
+      if (currentUser.hobbies && currentUser.hobbies.length > 0) {
+        const standardIds = currentUser.hobbies
+          .filter((h) => typeof h !== 'string' && h.id && h.id < 90)
+          .map((h) => (typeof h === 'string' ? 6 : h.id));
+        const customNames = currentUser.hobbies
+          .filter((h) => typeof h === 'string' || (h.id && h.id >= 90) || (h.id === 6 && h.name !== 'Other'))
+          .map((h) => (typeof h === 'string' ? h : h.name));
+
+        setSelectedHobbyIds(standardIds);
+        if (customNames.length > 0) {
+          setCustomInterests(customNames);
+          if (!standardIds.includes(6)) {
+            setSelectedHobbyIds((prev) => [...prev, 6]);
+          }
+        }
+      }
     }
   }, [currentUser]);
 
@@ -62,6 +85,20 @@ export default function MyProfilePage() {
     setSelectedHobbyIds((prev) =>
       prev.includes(hobbyId) ? prev.filter((id) => id !== hobbyId) : [...prev, hobbyId]
     );
+  };
+
+  const handleAddCustomInterest = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const clean = customInputText.trim();
+    if (!clean) return;
+    if (!customInterests.some((ci) => ci.toLowerCase() === clean.toLowerCase())) {
+      setCustomInterests((prev) => [...prev, clean]);
+    }
+    setCustomInputText('');
+  };
+
+  const handleRemoveCustomInterest = (nameToRemove: string) => {
+    setCustomInterests((prev) => prev.filter((name) => name !== nameToRemove));
   };
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,18 +136,32 @@ export default function MyProfilePage() {
     e.preventDefault();
     setIsSaving(true);
 
-    const selectedHobbies = hobbies.filter((h) => selectedHobbyIds.includes(h.id));
+    const baseHobbies = hobbies.filter((h) => selectedHobbyIds.includes(h.id) && h.id !== 6);
 
-    // Append custom "Other" text as a pseudo-hobby if filled
-    const finalHobbies = customOther.trim()
-      ? [...selectedHobbies, { id: 99, name: customOther.trim(), color: 'teal' as const }]
-      : selectedHobbies;
+    const customHobbyObjects: Hobby[] = customInterests.map((ci, idx) => ({
+      id: 90 + idx,
+      name: ci,
+      category: 'Custom',
+      color: 'teal' as const,
+    }));
+
+    if (selectedHobbyIds.includes(6) && customHobbyObjects.length === 0) {
+      customHobbyObjects.push({
+        id: 6,
+        name: customInputText.trim() || 'Other',
+        category: 'General',
+        color: 'teal' as const,
+      });
+    }
+
+    const finalHobbies: Hobby[] = [...baseHobbies, ...customHobbyObjects];
 
     try {
       await updateProfile({
         full_name: fullName.trim(),
         department: department.trim(),
         year,
+        gender,
         bio: bio.trim(),
         hobbies: finalHobbies,
         ...(avatarPreview ? { avatar_url: avatarPreview } : {}),
@@ -134,6 +185,7 @@ export default function MyProfilePage() {
   }
 
   const status = currentUser.verification_status;
+  const isOtherSelected = selectedHobbyIds.includes(6);
 
   return (
     <div className="min-h-[85vh] py-8 px-4 sm:px-6 max-w-3xl mx-auto space-y-6">
@@ -141,7 +193,7 @@ export default function MyProfilePage() {
       {showSavedToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-emerald-500 text-zinc-950 px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl flex items-center gap-2 animate-in slide-in-from-bottom-5">
           <CheckCircle2 className="w-4 h-4" />
-          <span>Profile updated!</span>
+          <span>Profile updated successfully!</span>
         </div>
       )}
 
@@ -154,47 +206,40 @@ export default function MyProfilePage() {
               {avatarPreview ? (
                 <Image src={avatarPreview} alt="Avatar" fill className="object-cover" unoptimized />
               ) : (
-                currentUser.full_name?.charAt(0) || 'U'
+                (currentUser.full_name || 'U').charAt(0).toUpperCase()
               )}
             </div>
             <button
               type="button"
-              disabled={isUploadingPhoto}
               onClick={() => fileInputRef.current?.click()}
-              className="absolute -bottom-2 -right-2 w-8 h-8 bg-purple-600 hover:bg-purple-500 rounded-xl flex items-center justify-center shadow-lg transition-colors disabled:opacity-50"
-              title="Upload profile photo"
+              disabled={isUploadingPhoto}
+              title="Upload new profile picture"
+              className="absolute -bottom-1 -right-1 p-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white shadow-lg transition-all cursor-pointer disabled:opacity-50"
             >
               {isUploadingPhoto ? (
                 <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               ) : (
-                <ImagePlus className="w-4 h-4 text-white" />
+                <ImagePlus className="w-3.5 h-3.5" />
               )}
             </button>
             <input
               ref={fileInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              className="hidden"
               onChange={handlePhotoSelect}
+              className="hidden"
             />
           </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h2 className="font-bold text-white text-lg">{currentUser.full_name || 'Student'}</h2>
+          {/* User metadata */}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-extrabold text-white text-lg truncate">
+                {currentUser.full_name || 'CSJMU Student'}
+              </h2>
               {status === 'verified' && (
                 <span className="bg-teal-500/20 text-teal-400 border border-teal-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> Verified
-                </span>
-              )}
-              {status === 'pending' && (
-                <span className="bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
-                  <Clock className="w-3 h-3" /> Under Review
-                </span>
-              )}
-              {(status === 'unverified' || status === 'rejected') && (
-                <span className="bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <ShieldAlert className="w-3 h-3 text-amber-500" /> Unverified
+                  <ShieldCheck className="w-3 h-3" /> Verified Student
                 </span>
               )}
             </div>
@@ -225,57 +270,15 @@ export default function MyProfilePage() {
           </div>
         </div>
 
-        {/* Photo upload error + guide */}
+        {/* Photo upload error */}
         {photoError && (
           <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs space-y-2">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{photoError}</span>
             </div>
-            <div className="flex flex-wrap gap-2 pl-6">
-              <a
-                href="https://jpeg-optimizer.com/compress-image-to-20kb/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-rose-300 hover:text-white underline underline-offset-2 font-semibold"
-              >
-                Compress here (jpeg-optimizer.com) <ExternalLink className="w-3 h-3" />
-              </a>
-              <span className="text-zinc-500">or</span>
-              <a
-                href="https://share.google/1e8tLX11dRwxiYfGX"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-rose-300 hover:text-white underline underline-offset-2 font-semibold"
-              >
-                Google compression tool <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
           </div>
         )}
-
-        {/* Photo upload guide (always visible) */}
-        <div className="mt-4 p-3 rounded-xl bg-zinc-950/60 border border-zinc-800 text-xs text-zinc-400">
-          <span className="font-semibold text-zinc-300">📸 Photo upload:</span> Max size is{' '}
-          <strong className="text-white">20 KB</strong>. If your photo is larger, compress it first at{' '}
-          <a
-            href="https://jpeg-optimizer.com/compress-image-to-20kb/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-purple-400 hover:underline font-semibold"
-          >
-            jpeg-optimizer.com
-          </a>
-          {' '}or{' '}
-          <a
-            href="https://share.google/1e8tLX11dRwxiYfGX"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-teal-400 hover:underline font-semibold"
-          >
-            Google tool
-          </a>.
-        </div>
       </div>
 
       {/* Edit Profile Form */}
@@ -283,6 +286,7 @@ export default function MyProfilePage() {
         <h3 className="text-lg font-black text-white mb-6">Edit Your Profile</h3>
 
         <form onSubmit={handleSave} className="space-y-5">
+          {/* Full Name */}
           <div>
             <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Full Name</label>
             <div className="relative">
@@ -297,26 +301,18 @@ export default function MyProfilePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Department / Branch</label>
-              <div className="relative">
-                <GraduationCap className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  placeholder="e.g. Computer Science, MBA..."
-                  className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors"
-                  required
-                />
-              </div>
-            </div>
+          {/* Department Dropdown */}
+          <div>
+            <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Department / Course</label>
+            <DepartmentDropdown value={department} onChange={setDepartment} required />
+          </div>
 
+          {/* Year & Gender */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Year of Study</label>
               <div className="relative">
-                <Calendar className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Calendar className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <select
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
@@ -329,8 +325,26 @@ export default function MyProfilePage() {
                 </select>
               </div>
             </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Gender</label>
+              <div className="relative">
+                <Smile className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 focus:outline-none transition-colors appearance-none cursor-pointer"
+                >
+                  <option value="Male">👦 Male</option>
+                  <option value="Female">👧 Female</option>
+                  <option value="Other">🏳️‍🌈 Other</option>
+                  <option value="Prefer not to say">🤐 Prefer not to say</option>
+                </select>
+              </div>
+            </div>
           </div>
 
+          {/* Bio */}
           <div>
             <label className="block text-xs font-semibold text-zinc-300 mb-1.5">Bio / Your Vibe</label>
             <textarea
@@ -350,50 +364,88 @@ export default function MyProfilePage() {
             <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 flex flex-wrap gap-2">
               {hobbies.map((hobby) => {
                 const isSelected = selectedHobbyIds.includes(hobby.id);
-                const colorMap: Record<string, string> = {
-                  coral: isSelected ? 'bg-rose-500 text-white border-rose-500' : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:border-rose-500/50',
-                  purple: isSelected ? 'bg-purple-600 text-white border-purple-600' : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:border-purple-500/50',
-                  teal: isSelected ? 'bg-teal-500 text-zinc-950 border-teal-500' : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:border-teal-500/50',
-                };
-                const cls = colorMap[hobby.color || 'teal'] || colorMap.teal;
-
                 return (
-                  <button
+                  <HobbyBadge
                     key={hobby.id}
-                    type="button"
+                    hobby={hobby}
+                    size="md"
+                    selected={isSelected}
                     onClick={() => toggleHobby(hobby.id)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${cls}`}
-                  >
-                    {hobby.name}
-                  </button>
+                  />
                 );
               })}
             </div>
 
-            {/* "Other" custom input — shows when Other (id=6) is selected */}
-            {selectedHobbyIds.includes(6) && (
-              <div className="mt-2">
-                <input
-                  type="text"
-                  value={customOther}
-                  onChange={(e) => setCustomOther(e.target.value)}
-                  placeholder="Describe your other interest (e.g. Photography, Chess, Debate...)"
-                  maxLength={50}
-                  className="w-full bg-zinc-950/80 border border-teal-500/40 focus:border-teal-400 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors"
-                />
-                <p className="text-[11px] text-zinc-500 mt-1">This will appear as your custom interest tag on your profile.</p>
+            {/* Custom "Other" Interest Creator */}
+            {isOtherSelected && (
+              <div className="mt-4 p-4 rounded-2xl bg-zinc-950/80 border border-teal-500/30 space-y-3 animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-teal-300">
+                    ✏️ Add Custom Interests / Hobbies:
+                  </label>
+                  <span className="text-[11px] text-zinc-400">Type & click Add</span>
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={customInputText}
+                    onChange={(e) => setCustomInputText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomInterest();
+                      }
+                    }}
+                    placeholder="e.g. Photography, Chess, Anime, Robotics, Badminton..."
+                    maxLength={40}
+                    className="flex-1 bg-zinc-900 border border-zinc-700 focus:border-teal-400 rounded-xl px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddCustomInterest()}
+                    disabled={!customInputText.trim()}
+                    className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-zinc-950 font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 cursor-pointer shadow-sm"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add</span>
+                  </button>
+                </div>
+
+                {customInterests.length > 0 && (
+                  <div className="space-y-1.5 pt-1">
+                    <p className="text-[11px] text-zinc-400 font-semibold">Your Custom Tags:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {customInterests.map((interest) => (
+                        <span
+                          key={interest}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/40 text-xs font-semibold"
+                        >
+                          <span>{interest}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCustomInterest(interest)}
+                            className="p-0.5 rounded-full hover:bg-teal-500/40 text-teal-200 hover:text-white"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          <div className="pt-4 border-t border-zinc-800 flex justify-end">
+          <div className="pt-2">
             <button
               type="submit"
               disabled={isSaving}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-bold text-xs shadow-glow-purple transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-rose-500 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-bold text-sm shadow-glow-purple flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
             >
               <Save className="w-4 h-4" />
-              <span>{isSaving ? 'Saving…' : 'Save Profile'}</span>
+              <span>{isSaving ? 'Saving Changes...' : 'Save Profile Changes'}</span>
             </button>
           </div>
         </form>
