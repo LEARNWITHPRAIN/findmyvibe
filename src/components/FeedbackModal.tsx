@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   MessageSquarePlus,
   X,
@@ -32,8 +33,13 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
   const [message, setMessage] = useState('');
   const [nameOrRoll, setNameOrRoll] = useState('');
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const targetEmail = 'findmyvibe.fun@gmail.com';
   const emailSubject = encodeURIComponent(`[FindMyVibe Feedback] ${category}`);
@@ -59,7 +65,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
     window.open(gmailUrl, '_blank', 'noopener,noreferrer');
   };
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md p-4 sm:p-6 overflow-y-auto flex items-start justify-center"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -192,6 +198,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
