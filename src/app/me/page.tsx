@@ -47,6 +47,8 @@ function MyProfileContent() {
   const [selectedHobbyNames, setSelectedHobbyNames] = useState<string[]>([]);
   const [customHobbies, setCustomHobbies] = useState<string[]>([]);
   const [hobbySearchQuery, setHobbySearchQuery] = useState('');
+  const [customInputText, setCustomInputText] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -569,38 +571,63 @@ function MyProfileContent() {
                     />
                   );
                 })}
+
+                {/* Explicit + Other / Custom Chip */}
+                <button
+                  type="button"
+                  onClick={() => setShowCustomInput(!showCustomInput)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full border transition-all duration-200 cursor-pointer ${
+                    showCustomInput
+                      ? 'bg-teal-500/20 text-teal-300 border-teal-500/50 shadow-glow-teal font-semibold'
+                      : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                  }`}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Other</span>
+                </button>
               </div>
 
-              {/* Zero Matches Fallback with Quick Custom Add */}
-              {hasZeroMatches && (
-                <div className="mt-3 p-3.5 rounded-xl bg-zinc-900/80 border border-teal-500/30 space-y-2.5 animate-in fade-in">
+              {/* Inline Custom Hobby Input Drawer (toggled by + Other or 0 search results) */}
+              {(showCustomInput || hasZeroMatches) && (
+                <div className="mt-3.5 p-3.5 rounded-xl bg-zinc-900/90 border border-teal-500/40 space-y-2.5 animate-in fade-in">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-zinc-200">
-                      Hobby not found — add it yourself
+                    <p className="text-xs font-bold text-teal-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+                      <span>{hasZeroMatches ? 'Hobby not found — add it yourself:' : 'Add Your Custom Vibe / Hobby:'}</span>
                     </p>
-                    <span className="text-[11px] text-zinc-400">Max 3 total</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomInput(false)}
+                      className="text-zinc-500 hover:text-zinc-300 text-xs p-1"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      value={hobbySearchQuery}
-                      onChange={(e) => setHobbySearchQuery(e.target.value)}
+                      value={customInputText || (hasZeroMatches ? hobbySearchQuery : '')}
+                      onChange={(e) => {
+                        setCustomInputText(e.target.value);
+                        if (hasZeroMatches) setHobbySearchQuery(e.target.value);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          handleAddCustomHobby(hobbySearchQuery);
+                          handleAddCustomHobby(customInputText || hobbySearchQuery);
                         }
                       }}
-                      placeholder="Type custom hobby name..."
+                      placeholder="e.g. Robotics, Chess, Formula 1, UI/UX..."
                       maxLength={35}
-                      className="flex-1 bg-zinc-950 border border-zinc-700 focus:border-teal-400 rounded-lg px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none"
+                      className="flex-1 bg-zinc-950 border border-zinc-700 focus:border-teal-400 rounded-xl px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none"
+                      autoFocus
                     />
                     <button
                       type="button"
-                      onClick={() => handleAddCustomHobby(hobbySearchQuery)}
-                      disabled={!hobbySearchQuery.trim() || selectedHobbyNames.length >= 3}
-                      className="px-3.5 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 text-zinc-950 font-bold text-xs flex items-center gap-1 transition-all disabled:opacity-40 cursor-pointer"
+                      onClick={() => handleAddCustomHobby(customInputText || hobbySearchQuery)}
+                      disabled={!(customInputText.trim() || hobbySearchQuery.trim()) || selectedHobbyNames.length >= 3}
+                      className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-zinc-950 font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 cursor-pointer shadow-sm"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add</span>

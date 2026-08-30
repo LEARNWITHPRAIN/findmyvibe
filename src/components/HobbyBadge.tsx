@@ -69,7 +69,9 @@ const colorMap: Record<string, { bg: string; text: string; border: string; glow?
   'Deep Conversations': { bg: 'bg-indigo-500/15 hover:bg-indigo-500/25', text: 'text-indigo-300', border: 'border-indigo-500/30' },
 
   // Generic fallback / custom
-  Other: { bg: 'bg-zinc-800/80 hover:bg-zinc-800', text: 'text-zinc-300', border: 'border-zinc-700' },
+  Other: { bg: 'bg-emerald-500/15 hover:bg-emerald-500/25', text: 'text-emerald-300', border: 'border-emerald-500/30' },
+  '+ Other': { bg: 'bg-emerald-500/15 hover:bg-emerald-500/25', text: 'text-emerald-300', border: 'border-emerald-500/30' },
+  '+ Custom': { bg: 'bg-teal-500/15 hover:bg-teal-500/25', text: 'text-teal-300', border: 'border-teal-500/30' },
 };
 
 // Fallback palette for custom tags
