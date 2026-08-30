@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/authContext';
 import { HobbyBadge } from '@/components/HobbyBadge';
 import { INITIAL_PROFILES, INITIAL_HOBBIES } from '@/lib/mockData';
 import {
@@ -17,11 +19,28 @@ import {
 const DEMO_PROFILES = INITIAL_PROFILES.slice(0, 3);
 
 export default function LandingPage() {
+  const router = useRouter();
+  const { currentUser, isLoading } = useAuth();
   const [selectedHobby, setSelectedHobby] = useState<string | null>(null);
+
+  // If user is already logged in, redirect directly into the app (e.g. /discover)
+  useEffect(() => {
+    if (!isLoading && currentUser) {
+      router.replace('/discover');
+    }
+  }, [currentUser, isLoading, router]);
 
   const filteredProfiles = selectedHobby
     ? DEMO_PROFILES.filter((p) => p.hobbies?.some((h) => (typeof h === 'string' ? h === selectedHobby : h.name === selectedHobby)))
     : DEMO_PROFILES;
+
+  if (isLoading || currentUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0A0B]">
+        <div className="w-10 h-10 rounded-xl border-2 border-purple-500/50 border-t-purple-400 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden bg-[#0A0A0B]">

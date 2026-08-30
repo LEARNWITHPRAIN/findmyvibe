@@ -39,7 +39,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo & Name */}
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2.5 group">
+            <Link href={currentUser ? '/discover' : '/'} className="flex items-center gap-2.5 group">
               <div className="relative w-9 h-9 rounded-xl overflow-hidden ring-1 ring-white/10 group-hover:ring-purple-500/50 transition-all shadow-glow-purple">
                 <Image
                   src="/logo.jpg"
