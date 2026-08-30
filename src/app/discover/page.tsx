@@ -39,7 +39,7 @@ export default function DiscoverPage() {
     // Exclude current user from the discover grid
     if (currentUser && profile.id === currentUser.id) return false;
 
-    // Search query match
+    // Search query match (searches name, department, bio, and all hobby/vibe tags)
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const fullName = (profile.full_name || '').toLowerCase();
@@ -48,7 +48,10 @@ export default function DiscoverPage() {
       const nameMatch = fullName.includes(q);
       const deptMatch = isVerified && dept.includes(q);
       const bioMatch = bio.includes(q);
-      if (!nameMatch && !deptMatch && !bioMatch) return false;
+      const hobbyMatch = profile.hobbies?.some((h) =>
+        (typeof h === 'string' ? h : h?.name || '').toLowerCase().includes(q)
+      );
+      if (!nameMatch && !deptMatch && !bioMatch && !hobbyMatch) return false;
     }
 
     // Hobby match
