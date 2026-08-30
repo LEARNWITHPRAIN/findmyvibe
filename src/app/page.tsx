@@ -126,10 +126,10 @@ export default function LandingPage() {
 
           <div className="flex flex-col items-center text-center">
             <div className="text-2xl sm:text-3xl font-black text-purple-400 flex items-center gap-1">
-              <span>6+</span>
+              <span>Unlimited</span>
               <Sparkles className="w-5 h-5 text-purple-400" />
             </div>
-            <p className="text-[11px] sm:text-xs text-zinc-500 mt-1">Hobby Categories</p>
+            <p className="text-[11px] sm:text-xs text-zinc-500 mt-1">Hobbies & Interests</p>
           </div>
         </div>
       </section>
