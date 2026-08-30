@@ -432,48 +432,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error: delError } = await supabase.from('profile_hobbies').delete().eq('profile_id', currentUser.id);
       if (delError) console.error('Hobby delete error:', delError.message);
 
-      const standardIds: number[] = [];
-      const customNames: string[] = [];
+      const hobbyNames: string[] = [];
 
       for (const h of updates.hobbies) {
-        if (typeof h === 'string') {
-          customNames.push(h);
-        } else if (typeof h === 'object' && h) {
-          if (typeof h.id === 'number' && h.id <= 6) {
-            standardIds.push(h.id);
-          } else if (h.name && h.name !== 'Other') {
-            customNames.push(h.name);
-          }
+        const name = typeof h === 'string' ? h : h?.name;
+        if (name && name !== 'Other' && !hobbyNames.includes(name)) {
+          hobbyNames.push(name);
         }
       }
 
-      // Upsert custom hobby names into hobbies table to get IDs
-      for (const name of customNames) {
+      // Upsert / fetch hobby names from Supabase hobbies table to get IDs
+      const resolvedIds: number[] = [];
+      for (const name of hobbyNames) {
         try {
           const { data: existingHobby } = await supabase
             .from('hobbies')
             .select('id')
-            .eq('name', name)
+            .ilike('name', name)
             .maybeSingle();
 
           if (existingHobby?.id) {
-            standardIds.push(existingHobby.id);
+            resolvedIds.push(existingHobby.id);
           } else {
             const { data: newHobby } = await supabase
               .from('hobbies')
-              .insert({ name, category: 'Custom' })
+              .insert({ name, category: 'General' })
               .select('id')
               .maybeSingle();
             if (newHobby?.id) {
-              standardIds.push(newHobby.id);
+              resolvedIds.push(newHobby.id);
             }
           }
         } catch (err) {
-          console.warn('Custom hobby sync warning:', err);
+          console.warn('Hobby sync warning for:', name, err);
         }
       }
 
-      const rows = Array.from(new Set(standardIds)).map((id) => ({
+      const rows = Array.from(new Set(resolvedIds)).map((id) => ({
         profile_id: currentUser.id,
         hobby_id: id,
       }));

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { HobbyBadge } from '@/components/HobbyBadge';
@@ -15,20 +15,26 @@ import {
   Plus,
   X,
   Smile,
+  Search,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Hobby } from '@/lib/types';
+import { INITIAL_HOBBIES, POPULAR_HOBBY_NAMES } from '@/lib/mockData';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { currentUser, hobbies, updateProfile, isLoading } = useAuth();
+  const { currentUser, updateProfile, isLoading } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [department, setDepartment] = useState('');
   const [year, setYear] = useState('1');
   const [gender, setGender] = useState('Prefer not to say');
   const [bio, setBio] = useState('');
-  const [selectedHobbyIds, setSelectedHobbyIds] = useState<number[]>([1, 3]);
-  const [customInterests, setCustomInterests] = useState<string[]>([]);
+  const [selectedHobbyNames, setSelectedHobbyNames] = useState<string[]>(['Music', 'Coding']);
+  const [customHobbies, setCustomHobbies] = useState<string[]>([]);
+  const [hobbySearchQuery, setHobbySearchQuery] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
   const [customInputText, setCustomInputText] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -42,79 +48,118 @@ export default function OnboardingPage() {
       if (currentUser.year) setYear(currentUser.year);
       if (currentUser.gender) setGender(currentUser.gender);
       if (currentUser.bio) setBio(currentUser.bio);
+
       if (currentUser.hobbies && currentUser.hobbies.length > 0) {
-        const STANDARD_HOBBY_NAMES = ['Dancing', 'Singing', 'Coding', 'Fitness', 'Athletics'];
+        const standardNames = INITIAL_HOBBIES.map((h) => h.name);
+        const userHobbyNames = currentUser.hobbies
+          .map((h) => (typeof h === 'string' ? h : h?.name))
+          .filter((name): name is string => Boolean(name && name !== 'Other'));
 
-        const standardHobbyObjects = currentUser.hobbies.filter((h) => {
-          const name = typeof h === 'string' ? h : h?.name;
-          return name && STANDARD_HOBBY_NAMES.includes(name);
-        });
-        const standardIds = standardHobbyObjects
-          .map((h) => (typeof h === 'string' ? null : h?.id))
-          .filter((id): id is number => typeof id === 'number');
+        const customNames = userHobbyNames.filter(
+          (name) => !standardNames.some((sn) => sn.toLowerCase() === name.toLowerCase())
+        );
 
-        const customHobbyObjects = currentUser.hobbies.filter((h) => {
-          const name = typeof h === 'string' ? h : h?.name;
-          return name && !STANDARD_HOBBY_NAMES.includes(name) && name !== 'Other';
-        });
-        const customNames = customHobbyObjects.map((h) => (typeof h === 'string' ? h : h.name));
-
-        const finalStandardIds = standardIds.length > 0 ? standardIds : [1, 3];
         if (customNames.length > 0) {
-          setCustomInterests(customNames);
-          setSelectedHobbyIds([...finalStandardIds, 6]);
-        } else {
-          setSelectedHobbyIds(finalStandardIds);
+          setCustomHobbies(customNames);
+        }
+
+        if (userHobbyNames.length > 0) {
+          setSelectedHobbyNames(userHobbyNames.slice(0, 3));
         }
       }
     }
   }, [currentUser, isLoading, router]);
 
-  const toggleHobby = (hobbyId: number) => {
-    setSelectedHobbyIds((prev) =>
-      prev.includes(hobbyId) ? prev.filter((id) => id !== hobbyId) : [...prev, hobbyId]
+  // Combine all available hobbies (standard 40 + any user added custom hobbies)
+  const allAvailableHobbyNames = useMemo(() => {
+    const standardNames = INITIAL_HOBBIES.map((h) => h.name);
+    const uniqueCustom = customHobbies.filter(
+      (c) => !standardNames.some((sn) => sn.toLowerCase() === c.toLowerCase())
     );
-  };
+    return [...standardNames, ...uniqueCustom];
+  }, [customHobbies]);
 
-  const handleAddCustomInterest = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const clean = customInputText.trim();
-    if (!clean) return;
-    if (!customInterests.some((ci) => ci.toLowerCase() === clean.toLowerCase())) {
-      setCustomInterests((prev) => [...prev, clean]);
+  // Filtered hobbies for rendering
+  const visibleHobbyNames = useMemo(() => {
+    const search = hobbySearchQuery.trim().toLowerCase();
+
+    if (search) {
+      return allAvailableHobbyNames.filter((name) => name.toLowerCase().includes(search));
     }
-    setCustomInputText('');
+
+    if (isExpanded) {
+      return allAvailableHobbyNames;
+    }
+
+    // Default view: 16 popular hobbies + any currently selected hobby outside the 16
+    const popularSet = new Set(POPULAR_HOBBY_NAMES);
+    const defaultList = [...POPULAR_HOBBY_NAMES];
+
+    // Ensure all selected hobbies stay visible even when collapsed
+    selectedHobbyNames.forEach((name) => {
+      if (!popularSet.has(name)) {
+        defaultList.push(name);
+      }
+    });
+
+    return defaultList;
+  }, [hobbySearchQuery, isExpanded, allAvailableHobbyNames, selectedHobbyNames]);
+
+  const toggleHobby = (name: string) => {
+    setSelectedHobbyNames((prev) => {
+      if (prev.includes(name)) {
+        return prev.filter((n) => n !== name);
+      }
+      if (prev.length >= 3) {
+        return prev;
+      }
+      return [...prev, name];
+    });
   };
 
-  const handleRemoveCustomInterest = (nameToRemove: string) => {
-    setCustomInterests((prev) => prev.filter((name) => name !== nameToRemove));
+  const handleAddCustomHobby = (customName?: string) => {
+    const raw = (customName || customInputText).trim();
+    if (!raw) return;
+    const clean = raw.slice(0, 35);
+
+    if (!customHobbies.some((c) => c.toLowerCase() === clean.toLowerCase())) {
+      setCustomHobbies((prev) => [...prev, clean]);
+    }
+
+    setSelectedHobbyNames((prev) => {
+      if (prev.includes(clean)) return prev;
+      if (prev.length >= 3) return prev;
+      return [...prev, clean];
+    });
+
+    setCustomInputText('');
+    setHobbySearchQuery('');
+  };
+
+  const handleRemoveCustomHobby = (nameToRemove: string) => {
+    setCustomHobbies((prev) => prev.filter((n) => n !== nameToRemove));
+    setSelectedHobbyNames((prev) => prev.filter((n) => n !== nameToRemove));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedHobbyNames.length === 0) return;
+
     setLoading(true);
 
-    const baseHobbies = hobbies.filter((h) => selectedHobbyIds.includes(h.id) && h.id !== 6);
-
-    // Build custom hobbies list
-    const customHobbyObjects: Hobby[] = customInterests.map((ci, idx) => ({
-      id: 90 + idx,
-      name: ci,
-      category: 'Custom',
-      color: 'teal' as const,
-    }));
-
-    // If Other is selected but no custom chips added, include basic 'Other'
-    if (selectedHobbyIds.includes(6) && customHobbyObjects.length === 0) {
-      customHobbyObjects.push({
-        id: 6,
-        name: customInputText.trim() || 'Other',
-        category: 'General',
+    // Build Hobby objects
+    const finalHobbies: Hobby[] = selectedHobbyNames.slice(0, 3).map((name, idx) => {
+      const standard = INITIAL_HOBBIES.find(
+        (h) => h.name.toLowerCase() === name.toLowerCase()
+      );
+      if (standard) return standard;
+      return {
+        id: 100 + idx,
+        name,
+        category: 'Custom',
         color: 'teal' as const,
-      });
-    }
-
-    const finalHobbies: Hobby[] = [...baseHobbies, ...customHobbyObjects];
+      };
+    });
 
     try {
       await updateProfile({
@@ -165,8 +210,8 @@ export default function OnboardingPage() {
     );
   }
 
-  const OTHER_HOBBY_ID = 6;
-  const isOtherSelected = selectedHobbyIds.includes(OTHER_HOBBY_ID);
+  const isSearchActive = Boolean(hobbySearchQuery.trim());
+  const hasZeroMatches = isSearchActive && visibleHobbyNames.length === 0;
 
   return (
     <div className="min-h-[88vh] py-12 px-4 sm:px-6 max-w-2xl mx-auto">
@@ -282,96 +327,177 @@ export default function OnboardingPage() {
             />
           </div>
 
-          {/* Hobbies / Interests Multi-select */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-semibold text-zinc-300">
-                Select Your Hobbies & Interests <span className="text-rose-400">*</span>
-              </label>
-              <span className="text-[11px] text-zinc-500">Pick as many as you like</span>
+          {/* Hobbies / Pick Your Vibe Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300">
+                  Pick Your Vibe (Hobbies & Interests) <span className="text-rose-400">*</span>
+                </label>
+                <span className="text-[11px] text-zinc-500">Choose 1 to 3 hobbies that best represent you</span>
+              </div>
+              <span
+                className={`text-xs font-bold px-2.5 py-0.5 rounded-full border transition-colors ${
+                  selectedHobbyNames.length === 3
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                    : selectedHobbyNames.length > 0
+                    ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                    : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                }`}
+              >
+                {selectedHobbyNames.length} / 3 selected
+              </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 flex flex-wrap gap-2.5">
-              {hobbies.map((hobby) => {
-                const isSelected = selectedHobbyIds.includes(hobby.id);
-                return (
-                  <HobbyBadge
-                    key={hobby.id}
-                    hobby={hobby}
-                    size="md"
-                    selected={isSelected}
-                    onClick={() => toggleHobby(hobby.id)}
-                  />
-                );
-              })}
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={hobbySearchQuery}
+                onChange={(e) => setHobbySearchQuery(e.target.value)}
+                placeholder="Search your hobby..."
+                className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-9 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none transition-colors"
+              />
+              {hobbySearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setHobbySearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-0.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* Custom "Other" Interest Creator */}
-            {isOtherSelected && (
-              <div className="mt-4 p-4 rounded-2xl bg-zinc-950/80 border border-teal-500/30 space-y-3 animate-in fade-in">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-teal-300">
-                    ✏️ Add Custom Interests / Hobbies:
-                  </label>
-                  <span className="text-[11px] text-zinc-400">Type & click Add</span>
+            {/* Chip Grid Container */}
+            <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/80">
+              <div className="flex flex-wrap gap-2 transition-all duration-300">
+                {visibleHobbyNames.map((name) => {
+                  const isSelected = selectedHobbyNames.includes(name);
+                  const isDisabled = selectedHobbyNames.length >= 3 && !isSelected;
+
+                  return (
+                    <HobbyBadge
+                      key={name}
+                      hobby={name}
+                      size="md"
+                      selected={isSelected}
+                      disabled={isDisabled}
+                      onClick={() => toggleHobby(name)}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Zero Matches Fallback with Quick Custom Add */}
+              {hasZeroMatches && (
+                <div className="mt-3 p-3.5 rounded-xl bg-zinc-900/80 border border-teal-500/30 space-y-2.5 animate-in fade-in">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-zinc-200">
+                      Hobby not found — add it yourself
+                    </p>
+                    <span className="text-[11px] text-zinc-400">Max 3 total</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={hobbySearchQuery}
+                      onChange={(e) => setHobbySearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCustomHobby(hobbySearchQuery);
+                        }
+                      }}
+                      placeholder="Type custom hobby name..."
+                      maxLength={35}
+                      className="flex-1 bg-zinc-950 border border-zinc-700 focus:border-teal-400 rounded-lg px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleAddCustomHobby(hobbySearchQuery)}
+                      disabled={!hobbySearchQuery.trim() || selectedHobbyNames.length >= 3}
+                      className="px-3.5 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 text-zinc-950 font-bold text-xs flex items-center gap-1 transition-all disabled:opacity-40 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add</span>
+                    </button>
+                  </div>
                 </div>
+              )}
 
-                {/* Input with Add button */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={customInputText}
-                    onChange={(e) => setCustomInputText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddCustomInterest();
-                      }
-                    }}
-                    placeholder="e.g. Photography, Chess, Anime, Robotics, Badminton..."
-                    maxLength={40}
-                    className="flex-1 bg-zinc-900 border border-zinc-700 focus:border-teal-400 rounded-xl px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none transition-colors"
-                  />
+              {/* Expand / Collapse Button (shown when not actively searching) */}
+              {!isSearchActive && (
+                <div className="mt-3 pt-3 border-t border-zinc-800/60 flex items-center justify-between">
                   <button
                     type="button"
-                    onClick={() => handleAddCustomInterest()}
-                    disabled={!customInputText.trim()}
-                    className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-zinc-950 font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 cursor-pointer shadow-sm"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add</span>
+                    <span>
+                      {isExpanded
+                        ? 'Show fewer hobbies'
+                        : `Show more hobbies (${INITIAL_HOBBIES.length - POPULAR_HOBBY_NAMES.length} more)`}
+                    </span>
+                    {isExpanded ? (
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    )}
                   </button>
-                </div>
 
-                {/* Added Custom Chips */}
-                {customInterests.length > 0 && (
-                  <div className="space-y-1.5 pt-1">
-                    <p className="text-[11px] text-zinc-400 font-semibold">Your Custom Tags:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {customInterests.map((interest) => (
+                  <span className="text-[11px] text-zinc-500">
+                    {selectedHobbyNames.length >= 3
+                      ? 'Limit reached (3/3)'
+                      : `Can pick ${3 - selectedHobbyNames.length} more`}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Custom tags list (if any custom hobbies exist) */}
+            {customHobbies.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <p className="text-[11px] text-zinc-400 font-semibold">Your Custom Hobbies:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {customHobbies.map((custom) => {
+                    const isSelected = selectedHobbyNames.includes(custom);
+                    return (
+                      <span
+                        key={custom}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                          isSelected
+                            ? 'bg-teal-500/20 text-teal-300 border-teal-500/40'
+                            : 'bg-zinc-900 text-zinc-400 border-zinc-800'
+                        }`}
+                      >
                         <span
-                          key={interest}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/40 text-xs font-semibold"
+                          className="cursor-pointer hover:underline"
+                          onClick={() => toggleHobby(custom)}
                         >
-                          <span>{interest}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveCustomInterest(interest)}
-                            className="p-0.5 rounded-full hover:bg-teal-500/40 text-teal-200 hover:text-white"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                          {isSelected && '✓ '}
+                          {custom}
                         </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomHobby(custom)}
+                          className="p-0.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-rose-400 transition-colors"
+                          title="Remove custom hobby"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
-            {selectedHobbyIds.length === 0 && customInterests.length === 0 && (
-              <p className="text-[11px] text-rose-400 mt-1.5">
-                Please select at least 1 hobby or interest.
+            {selectedHobbyNames.length === 0 && (
+              <p className="text-[11px] text-rose-400 mt-1">
+                Please select at least 1 hobby or interest to continue.
               </p>
             )}
           </div>
@@ -384,7 +510,7 @@ export default function OnboardingPage() {
 
             <button
               type="submit"
-              disabled={loading || (selectedHobbyIds.length === 0 && customInterests.length === 0) || !department.trim()}
+              disabled={loading || selectedHobbyNames.length === 0 || !department.trim()}
               className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-rose-500 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-bold text-sm shadow-glow-purple transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               <span>Save & Continue</span>

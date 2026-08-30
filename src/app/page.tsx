@@ -166,7 +166,7 @@ export default function LandingPage() {
               </div>
               <h3 className="font-bold text-white text-base mb-2">Pick Your Vibe</h3>
               <p className="text-xs text-zinc-400 leading-relaxed">
-                Select your hobbies: Dancing, Singing, Coding, Fitness, Athletics, and more.
+                Select your hobbies: Music, Gaming, Coding, Cricket, Anime, and 35+ more.
               </p>
             </div>
             <span className="text-[10px] text-zinc-500 font-mono mt-4">Multi-select Chips</span>
@@ -204,7 +204,7 @@ export default function LandingPage() {
           </div>
 
           {/* Filter Chips */}
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 max-w-xl">
             <button
               onClick={() => setSelectedHobby(null)}
               className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all ${
@@ -215,10 +215,11 @@ export default function LandingPage() {
             >
               All Vibes
             </button>
-            {INITIAL_HOBBIES.map((h) => (
+            {INITIAL_HOBBIES.slice(0, 10).map((h) => (
               <HobbyBadge
                 key={h.id}
                 hobby={h}
+                size="sm"
                 selected={selectedHobby === h.name}
                 onClick={() => setSelectedHobby(selectedHobby === h.name ? null : h.name)}
               />

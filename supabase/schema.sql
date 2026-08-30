@@ -14,14 +14,48 @@ CREATE TABLE IF NOT EXISTS public.hobbies (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Seed initial MVP hobbies
-INSERT INTO public.hobbies (name) VALUES
-  ('Dancing'),
-  ('Singing'),
-  ('Coding'),
-  ('Fitness'),
-  ('Athletics'),
-  ('Other')
+-- Seed standard 40 hobbies
+INSERT INTO public.hobbies (name, category) VALUES
+  ('Music', 'Music & Audio'),
+  ('Bollywood', 'Music & Audio'),
+  ('Hip-Hop', 'Music & Audio'),
+  ('K-Pop', 'Music & Audio'),
+  ('Singing', 'Music & Audio'),
+  ('Gaming', 'Gaming'),
+  ('BGMI', 'Gaming'),
+  ('Free Fire', 'Gaming'),
+  ('Valorant', 'Gaming'),
+  ('Anime', 'Entertainment'),
+  ('Movies', 'Entertainment'),
+  ('Web Series', 'Entertainment'),
+  ('Cricket', 'Sports'),
+  ('Football', 'Sports'),
+  ('Badminton', 'Sports'),
+  ('Basketball', 'Sports'),
+  ('Gym', 'Fitness'),
+  ('Calisthenics', 'Fitness'),
+  ('Running', 'Fitness'),
+  ('Cycling', 'Fitness'),
+  ('Coding', 'Tech & Business'),
+  ('AI', 'Tech & Business'),
+  ('Startups', 'Tech & Business'),
+  ('Entrepreneurship', 'Tech & Business'),
+  ('Photography', 'Creative & Arts'),
+  ('Video Editing', 'Creative & Arts'),
+  ('Content Creation', 'Creative & Arts'),
+  ('Drawing', 'Creative & Arts'),
+  ('Dancing', 'Creative & Arts'),
+  ('Fashion', 'Creative & Arts'),
+  ('Reading', 'Lifestyle & Outdoors'),
+  ('Travelling', 'Lifestyle & Outdoors'),
+  ('Food', 'Lifestyle & Outdoors'),
+  ('Cooking', 'Lifestyle & Outdoors'),
+  ('Café Hopping', 'Lifestyle & Outdoors'),
+  ('Trekking', 'Lifestyle & Outdoors'),
+  ('Self Improvement', 'Mindset & Social'),
+  ('Psychology', 'Mindset & Social'),
+  ('Making New Friends', 'Mindset & Social'),
+  ('Deep Conversations', 'Mindset & Social')
 ON CONFLICT (name) DO NOTHING;
 
 -- 2. Create Profiles table

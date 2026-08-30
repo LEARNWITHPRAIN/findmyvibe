@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -22,8 +22,12 @@ import {
   X,
   Sparkles,
   ArrowRight,
+  Search,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Hobby } from '@/lib/types';
+import { INITIAL_HOBBIES, POPULAR_HOBBY_NAMES } from '@/lib/mockData';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB
 
@@ -33,16 +37,17 @@ function MyProfileContent() {
   const isSetupFlow = searchParams.get('setup') === '1';
   const isEmailVerifiedRedirect = searchParams.get('verified') === '1';
 
-  const { currentUser, hobbies, updateProfile, uploadAvatar, isLoading } = useAuth();
+  const { currentUser, updateProfile, uploadAvatar, isLoading } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [department, setDepartment] = useState('');
   const [year, setYear] = useState('2');
   const [gender, setGender] = useState('Male');
   const [bio, setBio] = useState('');
-  const [selectedHobbyIds, setSelectedHobbyIds] = useState<number[]>([]);
-  const [customInterests, setCustomInterests] = useState<string[]>([]);
-  const [customInputText, setCustomInputText] = useState('');
+  const [selectedHobbyNames, setSelectedHobbyNames] = useState<string[]>([]);
+  const [customHobbies, setCustomHobbies] = useState<string[]>([]);
+  const [hobbySearchQuery, setHobbySearchQuery] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -69,53 +74,92 @@ function MyProfileContent() {
       setAvatarPreview(currentUser.avatar_url || null);
 
       if (currentUser.hobbies && currentUser.hobbies.length > 0) {
-        const STANDARD_HOBBY_NAMES = ['Dancing', 'Singing', 'Coding', 'Fitness', 'Athletics'];
-        
-        // Find standard hobby IDs
-        const standardHobbyObjects = currentUser.hobbies.filter((h) => {
-          const name = typeof h === 'string' ? h : h?.name;
-          return name && STANDARD_HOBBY_NAMES.includes(name);
-        });
-        const standardIds = standardHobbyObjects
-          .map((h) => (typeof h === 'string' ? null : h?.id))
-          .filter((id): id is number => typeof id === 'number');
+        const standardNames = INITIAL_HOBBIES.map((h) => h.name);
+        const userHobbyNames = currentUser.hobbies
+          .map((h) => (typeof h === 'string' ? h : h?.name))
+          .filter((name): name is string => Boolean(name && name !== 'Other'));
 
-        // Find custom hobby names
-        const customHobbyObjects = currentUser.hobbies.filter((h) => {
-          const name = typeof h === 'string' ? h : h?.name;
-          return name && !STANDARD_HOBBY_NAMES.includes(name) && name !== 'Other';
-        });
-        const customNames = customHobbyObjects.map((h) => (typeof h === 'string' ? h : h.name));
+        const customNames = userHobbyNames.filter(
+          (name) => !standardNames.some((sn) => sn.toLowerCase() === name.toLowerCase())
+        );
 
-        const finalStandardIds = standardIds.length > 0 ? standardIds : [1, 3];
         if (customNames.length > 0) {
-          setCustomInterests(customNames);
-          setSelectedHobbyIds([...finalStandardIds, 6]);
-        } else {
-          setSelectedHobbyIds(finalStandardIds);
+          setCustomHobbies(customNames);
+        }
+
+        if (userHobbyNames.length > 0) {
+          setSelectedHobbyNames(userHobbyNames.slice(0, 3));
         }
       }
     }
   }, [currentUser]);
 
-  const toggleHobby = (hobbyId: number) => {
-    setSelectedHobbyIds((prev) =>
-      prev.includes(hobbyId) ? prev.filter((id) => id !== hobbyId) : [...prev, hobbyId]
+  // Combine all available hobbies
+  const allAvailableHobbyNames = useMemo(() => {
+    const standardNames = INITIAL_HOBBIES.map((h) => h.name);
+    const uniqueCustom = customHobbies.filter(
+      (c) => !standardNames.some((sn) => sn.toLowerCase() === c.toLowerCase())
     );
-  };
+    return [...standardNames, ...uniqueCustom];
+  }, [customHobbies]);
 
-  const handleAddCustomInterest = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const clean = customInputText.trim();
-    if (!clean) return;
-    if (!customInterests.some((ci) => ci.toLowerCase() === clean.toLowerCase())) {
-      setCustomInterests((prev) => [...prev, clean]);
+  // Filtered hobbies for rendering
+  const visibleHobbyNames = useMemo(() => {
+    const search = hobbySearchQuery.trim().toLowerCase();
+
+    if (search) {
+      return allAvailableHobbyNames.filter((name) => name.toLowerCase().includes(search));
     }
-    setCustomInputText('');
+
+    if (isExpanded) {
+      return allAvailableHobbyNames;
+    }
+
+    const popularSet = new Set(POPULAR_HOBBY_NAMES);
+    const defaultList = [...POPULAR_HOBBY_NAMES];
+
+    selectedHobbyNames.forEach((name) => {
+      if (!popularSet.has(name)) {
+        defaultList.push(name);
+      }
+    });
+
+    return defaultList;
+  }, [hobbySearchQuery, isExpanded, allAvailableHobbyNames, selectedHobbyNames]);
+
+  const toggleHobby = (name: string) => {
+    setSelectedHobbyNames((prev) => {
+      if (prev.includes(name)) {
+        return prev.filter((n) => n !== name);
+      }
+      if (prev.length >= 3) {
+        return prev;
+      }
+      return [...prev, name];
+    });
   };
 
-  const handleRemoveCustomInterest = (nameToRemove: string) => {
-    setCustomInterests((prev) => prev.filter((name) => name !== nameToRemove));
+  const handleAddCustomHobby = (customName?: string) => {
+    const raw = (customName || hobbySearchQuery).trim();
+    if (!raw) return;
+    const clean = raw.slice(0, 35);
+
+    if (!customHobbies.some((c) => c.toLowerCase() === clean.toLowerCase())) {
+      setCustomHobbies((prev) => [...prev, clean]);
+    }
+
+    setSelectedHobbyNames((prev) => {
+      if (prev.includes(clean)) return prev;
+      if (prev.length >= 3) return prev;
+      return [...prev, clean];
+    });
+
+    setHobbySearchQuery('');
+  };
+
+  const handleRemoveCustomHobby = (nameToRemove: string) => {
+    setCustomHobbies((prev) => prev.filter((n) => n !== nameToRemove));
+    setSelectedHobbyNames((prev) => prev.filter((n) => n !== nameToRemove));
   };
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,7 +197,6 @@ function MyProfileContent() {
     e.preventDefault();
     setFormError(null);
 
-    // Mandatory validation (All fields mandatory except bio + min 1 hobby)
     if (!fullName.trim()) {
       setFormError('Full Name is mandatory.');
       return;
@@ -170,32 +213,25 @@ function MyProfileContent() {
       setFormError('Gender selection is mandatory.');
       return;
     }
-    if (selectedHobbyIds.length === 0 && customInterests.length === 0) {
-      setFormError('Please select at least 1 hobby or interest tag.');
+    if (selectedHobbyNames.length === 0) {
+      setFormError('Please select at least 1 hobby or vibe tag.');
       return;
     }
 
     setIsSaving(true);
 
-    const baseHobbies = hobbies.filter((h) => selectedHobbyIds.includes(h.id) && h.id !== 6);
-
-    const customHobbyObjects: Hobby[] = customInterests.map((ci, idx) => ({
-      id: 90 + idx,
-      name: ci,
-      category: 'Custom',
-      color: 'teal' as const,
-    }));
-
-    if (selectedHobbyIds.includes(6) && customHobbyObjects.length === 0) {
-      customHobbyObjects.push({
-        id: 6,
-        name: customInputText.trim() || 'Other',
-        category: 'General',
+    const finalHobbies: Hobby[] = selectedHobbyNames.slice(0, 3).map((name, idx) => {
+      const standard = INITIAL_HOBBIES.find(
+        (h) => h.name.toLowerCase() === name.toLowerCase()
+      );
+      if (standard) return standard;
+      return {
+        id: 100 + idx,
+        name,
+        category: 'Custom',
         color: 'teal' as const,
-      });
-    }
-
-    const finalHobbies: Hobby[] = [...baseHobbies, ...customHobbyObjects];
+      };
+    });
 
     try {
       await updateProfile({
@@ -212,7 +248,6 @@ function MyProfileContent() {
       setTimeout(() => setShowSavedToast(false), 3500);
 
       if (isSetupFlow) {
-        // Direct forward to verification or discover
         router.push('/verify-id');
       }
     } catch (err) {
@@ -232,7 +267,8 @@ function MyProfileContent() {
   }
 
   const status = currentUser.verification_status;
-  const isOtherSelected = selectedHobbyIds.includes(6);
+  const isSearchActive = Boolean(hobbySearchQuery.trim());
+  const hasZeroMatches = isSearchActive && visibleHobbyNames.length === 0;
 
   return (
     <div className="min-h-[85vh] py-8 px-4 sm:px-6 max-w-3xl mx-auto space-y-6">
@@ -261,107 +297,134 @@ function MyProfileContent() {
         </div>
       )}
 
-      {/* Profile Header Card */}
-      <div className="bg-zinc-900/80 border border-zinc-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl shadow-xl">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          {/* Avatar + Upload */}
-          <div className="relative shrink-0">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-900/40 to-teal-900/40 border border-zinc-700 overflow-hidden flex items-center justify-center text-zinc-300 font-bold text-2xl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            My Campus Profile
+          </h1>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+            Manage your student profile details and hobbies visible to fellow students.
+          </p>
+        </div>
+
+        {/* Verification Pill */}
+        <div className="flex items-center gap-2">
+          {status === 'verified' && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-semibold">
+              <ShieldCheck className="w-4 h-4 text-teal-400" /> CSJMU Verified
+            </span>
+          )}
+          {status === 'pending' && (
+            <Link
+              href="/verify-id"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-colors"
+            >
+              <Clock className="w-4 h-4 text-amber-400" /> ID Verification Under Review
+            </Link>
+          )}
+          {(status === 'unverified' || status === 'rejected') && (
+            <Link
+              href="/verify-id"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold hover:bg-rose-500/20 transition-colors"
+            >
+              <AlertCircle className="w-4 h-4 text-rose-400" />
+              {status === 'rejected' ? 'Verification Rejected — Retry' : 'Upload ID to Verify'}
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* Main Profile Card */}
+      <div className="bg-zinc-900/70 border border-zinc-800 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl space-y-8">
+        {/* Photo Upload Section */}
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b border-zinc-800">
+          <div className="relative group">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl overflow-hidden border-2 border-purple-500/40 bg-zinc-950 flex items-center justify-center relative shadow-glow-purple/20">
               {avatarPreview ? (
-                <Image src={avatarPreview} alt="Avatar" fill className="object-cover" unoptimized />
+                <Image
+                  src={avatarPreview}
+                  alt={fullName || 'Avatar'}
+                  fill
+                  className="object-cover"
+                  sizes="112px"
+                />
               ) : (
-                (currentUser.full_name || 'U').charAt(0).toUpperCase()
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-900/40 to-teal-900/40 text-zinc-400">
+                  <User className="w-10 h-10 text-zinc-500" />
+                  <span className="text-[10px] text-zinc-500 mt-1 font-medium">No Photo</span>
+                </div>
+              )}
+
+              {/* Upload spinner */}
+              {isUploadingPhoto && (
+                <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-teal-400 border-t-transparent rounded-full animate-spin" />
+                </div>
               )}
             </div>
+
+            {/* Change photo button */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploadingPhoto}
-              title="Upload new profile picture"
-              className="absolute -bottom-1 -right-1 p-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white shadow-lg transition-all cursor-pointer disabled:opacity-50"
+              className="absolute -bottom-2 -right-2 p-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white shadow-lg transition-transform active:scale-90 cursor-pointer"
+              title="Upload new photo"
             >
-              {isUploadingPhoto ? (
-                <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              ) : (
-                <ImagePlus className="w-3.5 h-3.5" />
-              )}
+              <Camera className="w-4 h-4" />
             </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handlePhotoSelect}
-              className="hidden"
-            />
           </div>
 
-          {/* User metadata */}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="font-extrabold text-white text-lg truncate">
-                {currentUser.full_name || 'CSJMU Student'}
-              </h2>
-              {status === 'verified' && (
-                <span className="bg-teal-500/20 text-teal-400 border border-teal-500/40 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> Verified Student
-                </span>
+          <div className="flex-1 text-center sm:text-left space-y-2">
+            <h2 className="text-base font-bold text-white">Profile Photo</h2>
+            <p className="text-xs text-zinc-400 leading-relaxed max-w-md">
+              Upload a clear picture of yourself so CSJMU batchmates recognize you on the campus discover feed.
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center sm:justify-start pt-1">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoSelect}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingPhoto}
+                className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <ImagePlus className="w-3.5 h-3.5 text-purple-400" />
+                <span>{avatarPreview ? 'Change Photo' : 'Upload Photo'}</span>
+              </button>
+              {avatarPreview && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setAvatarPreview(null);
+                    await updateProfile({ avatar_url: null });
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-zinc-800/60 hover:bg-rose-500/20 text-xs font-medium text-zinc-400 hover:text-rose-400 transition-colors cursor-pointer"
+                >
+                  Remove
+                </button>
               )}
             </div>
-            <p className="text-xs text-zinc-400">{currentUser.email}</p>
-
-            {/* Verification CTA */}
-            <div className="mt-3">
-              {status === 'verified' ? (
-                <span className="text-xs text-teal-400 font-semibold flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4" /> ID Approved — Full Access Active
-                </span>
-              ) : status === 'pending' ? (
-                <Link
-                  href="/verify-id"
-                  className="text-xs text-amber-400 font-semibold flex items-center gap-1.5 hover:underline"
-                >
-                  <Clock className="w-4 h-4 animate-pulse" /> ID Under Review — Check Status
-                </Link>
-              ) : (
-                <Link
-                  href="/verify-id"
-                  className="inline-flex text-xs text-white font-bold items-center gap-1.5 bg-gradient-to-r from-purple-600 to-teal-500 px-3.5 py-1.5 rounded-xl shadow-glow-purple hover:opacity-90 transition-all"
-                >
-                  <Camera className="w-3.5 h-3.5" /> Verify Your ID to Unlock Full Access
-                </Link>
-              )}
-            </div>
+            {photoError && <p className="text-xs text-rose-400 font-medium">{photoError}</p>}
           </div>
         </div>
 
-        {/* Photo upload error */}
-        {photoError && (
-          <div className="mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs space-y-2">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{photoError}</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Edit Profile Form */}
-      <div className="bg-zinc-900/70 border border-zinc-800 rounded-3xl p-5 sm:p-8 backdrop-blur-xl shadow-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-black text-white">Student Profile Information</h3>
-          <span className="text-xs text-zinc-400 font-medium">
-            <span className="text-rose-400">*</span> Required fields
-          </span>
-        </div>
-
+        {/* Error Alert */}
         {formError && (
-          <div className="mb-5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
             <span>{formError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSave} className="space-y-5">
+        {/* Form Fields */}
+        <form onSubmit={handleSave} className="space-y-6">
           {/* Full Name */}
           <div>
             <label className="block text-xs font-semibold text-zinc-300 mb-1.5">
@@ -373,7 +436,7 @@ function MyProfileContent() {
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="e.g. Priyanshu Sharma"
+                placeholder="e.g. Aarav Sharma"
                 className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors"
                 required
               />
@@ -446,87 +509,170 @@ function MyProfileContent() {
           </div>
 
           {/* Hobbies Selection */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-semibold text-zinc-300">
-                My Hobbies & Interests <span className="text-rose-400">*</span>
-              </label>
-              <span className="text-[11px] text-zinc-500">Pick at least 1</span>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-300">
+                  My Hobbies & Interests <span className="text-rose-400">*</span>
+                </label>
+                <span className="text-[11px] text-zinc-500">Pick 1 to 3 vibes</span>
+              </div>
+              <span
+                className={`text-xs font-bold px-2.5 py-0.5 rounded-full border transition-colors ${
+                  selectedHobbyNames.length === 3
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                    : selectedHobbyNames.length > 0
+                    ? 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+                    : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                }`}
+              >
+                {selectedHobbyNames.length} / 3 selected
+              </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 flex flex-wrap gap-2">
-              {hobbies.map((hobby) => {
-                const isSelected = selectedHobbyIds.includes(hobby.id);
-                return (
-                  <HobbyBadge
-                    key={hobby.id}
-                    hobby={hobby}
-                    size="md"
-                    selected={isSelected}
-                    onClick={() => toggleHobby(hobby.id)}
-                  />
-                );
-              })}
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={hobbySearchQuery}
+                onChange={(e) => setHobbySearchQuery(e.target.value)}
+                placeholder="Search your hobby..."
+                className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-9 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none transition-colors"
+              />
+              {hobbySearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setHobbySearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-0.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* Custom "Other" Interest Creator */}
-            {isOtherSelected && (
-              <div className="mt-4 p-4 rounded-2xl bg-zinc-950/80 border border-teal-500/30 space-y-3 animate-in fade-in">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-teal-300">
-                    ✏️ Add Custom Interests / Hobbies:
-                  </label>
-                  <span className="text-[11px] text-zinc-400">Type & click Add</span>
+            {/* Chip Grid Container */}
+            <div className="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/80">
+              <div className="flex flex-wrap gap-2 transition-all duration-300">
+                {visibleHobbyNames.map((name) => {
+                  const isSelected = selectedHobbyNames.includes(name);
+                  const isDisabled = selectedHobbyNames.length >= 3 && !isSelected;
+
+                  return (
+                    <HobbyBadge
+                      key={name}
+                      hobby={name}
+                      size="md"
+                      selected={isSelected}
+                      disabled={isDisabled}
+                      onClick={() => toggleHobby(name)}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* Zero Matches Fallback with Quick Custom Add */}
+              {hasZeroMatches && (
+                <div className="mt-3 p-3.5 rounded-xl bg-zinc-900/80 border border-teal-500/30 space-y-2.5 animate-in fade-in">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-zinc-200">
+                      Hobby not found — add it yourself
+                    </p>
+                    <span className="text-[11px] text-zinc-400">Max 3 total</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={hobbySearchQuery}
+                      onChange={(e) => setHobbySearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCustomHobby(hobbySearchQuery);
+                        }
+                      }}
+                      placeholder="Type custom hobby name..."
+                      maxLength={35}
+                      className="flex-1 bg-zinc-950 border border-zinc-700 focus:border-teal-400 rounded-lg px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleAddCustomHobby(hobbySearchQuery)}
+                      disabled={!hobbySearchQuery.trim() || selectedHobbyNames.length >= 3}
+                      className="px-3.5 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 text-zinc-950 font-bold text-xs flex items-center gap-1 transition-all disabled:opacity-40 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add</span>
+                    </button>
+                  </div>
                 </div>
+              )}
 
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={customInputText}
-                    onChange={(e) => setCustomInputText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddCustomInterest();
-                      }
-                    }}
-                    placeholder="e.g. Photography, Chess, Anime, Robotics, Badminton..."
-                    maxLength={40}
-                    className="flex-1 bg-zinc-900 border border-zinc-700 focus:border-teal-400 rounded-xl px-3.5 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none transition-colors"
-                  />
+              {/* Expand / Collapse Button */}
+              {!isSearchActive && (
+                <div className="mt-3 pt-3 border-t border-zinc-800/60 flex items-center justify-between">
                   <button
                     type="button"
-                    onClick={() => handleAddCustomInterest()}
-                    disabled={!customInputText.trim()}
-                    className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-zinc-950 font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 cursor-pointer shadow-sm"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add</span>
+                    <span>
+                      {isExpanded
+                        ? 'Show fewer hobbies'
+                        : `Show more hobbies (${INITIAL_HOBBIES.length - POPULAR_HOBBY_NAMES.length} more)`}
+                    </span>
+                    {isExpanded ? (
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    )}
                   </button>
-                </div>
 
-                {customInterests.length > 0 && (
-                  <div className="space-y-1.5 pt-1">
-                    <p className="text-[11px] text-zinc-400 font-semibold">Your Custom Tags:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {customInterests.map((interest) => (
+                  <span className="text-[11px] text-zinc-500">
+                    {selectedHobbyNames.length >= 3
+                      ? 'Limit reached (3/3)'
+                      : `Can pick ${3 - selectedHobbyNames.length} more`}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Custom tags list */}
+            {customHobbies.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <p className="text-[11px] text-zinc-400 font-semibold">Your Custom Hobbies:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {customHobbies.map((custom) => {
+                    const isSelected = selectedHobbyNames.includes(custom);
+                    return (
+                      <span
+                        key={custom}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                          isSelected
+                            ? 'bg-teal-500/20 text-teal-300 border-teal-500/40'
+                            : 'bg-zinc-900 text-zinc-400 border-zinc-800'
+                        }`}
+                      >
                         <span
-                          key={interest}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/40 text-xs font-semibold"
+                          className="cursor-pointer hover:underline"
+                          onClick={() => toggleHobby(custom)}
                         >
-                          <span>{interest}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveCustomInterest(interest)}
-                            className="p-0.5 rounded-full hover:bg-teal-500/40 text-teal-200 hover:text-white"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                          {isSelected && '✓ '}
+                          {custom}
                         </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomHobby(custom)}
+                          className="p-0.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-rose-400 transition-colors"
+                          title="Remove custom hobby"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -544,7 +690,7 @@ function MyProfileContent() {
 
             <button
               type="submit"
-              disabled={isSaving || !fullName.trim() || !department.trim() || (selectedHobbyIds.length === 0 && customInterests.length === 0)}
+              disabled={isSaving || !fullName.trim() || !department.trim() || selectedHobbyNames.length === 0}
               className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-rose-500 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-bold text-sm shadow-glow-purple flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
             >
               {isSaving ? (

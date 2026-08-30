@@ -135,14 +135,14 @@ export default function DiscoverPage() {
 
         {/* Hobby and Year Filter Row */}
         <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
-          {/* Hobby Chips */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-semibold text-zinc-400 mr-1 flex items-center gap-1">
+          {/* Hobby Chips - Scrollable Row */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 max-w-full no-scrollbar">
+            <span className="text-xs font-semibold text-zinc-400 mr-1 flex items-center gap-1 shrink-0">
               <Filter className="w-3 h-3 text-purple-400" /> Vibes:
             </span>
             <button
               onClick={() => setSelectedHobby(null)}
-              className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all ${
+              className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all shrink-0 cursor-pointer ${
                 selectedHobby === null
                   ? 'bg-white text-zinc-950 border-white font-bold'
                   : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-700'
@@ -151,13 +151,14 @@ export default function DiscoverPage() {
               All Vibes
             </button>
             {hobbies.map((hobby) => (
-              <HobbyBadge
-                key={hobby.id}
-                hobby={hobby}
-                size="sm"
-                selected={selectedHobby === hobby.name}
-                onClick={() => setSelectedHobby(selectedHobby === hobby.name ? null : hobby.name)}
-              />
+              <div key={hobby.id} className="shrink-0">
+                <HobbyBadge
+                  hobby={hobby}
+                  size="sm"
+                  selected={selectedHobby === hobby.name}
+                  onClick={() => setSelectedHobby(selectedHobby === hobby.name ? null : hobby.name)}
+                />
+              </div>
             ))}
           </div>
 
