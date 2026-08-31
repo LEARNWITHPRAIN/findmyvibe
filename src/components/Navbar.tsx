@@ -180,19 +180,10 @@ export default function Navbar() {
 
           {/* Mobile menu toggle */}
           <div className="flex md:hidden items-center gap-2">
-            {/* Show avatar initials on mobile when logged in */}
-            {currentUser && (
-              <Link href="/me" className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-teal-400 text-zinc-950 flex items-center justify-center font-bold text-xs overflow-hidden">
-                {currentUser.avatar_url ? (
-                  <Image src={currentUser.avatar_url} alt={currentUser.full_name} width={32} height={32} className="object-cover w-full h-full" unoptimized />
-                ) : (
-                  currentUser.full_name?.charAt(0) || 'U'
-                )}
-              </Link>
-            )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900"
+              className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+              aria-label="Toggle Menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -200,29 +191,9 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu Dropdown (Secondary utilities only — Discover, Messages & Profile live in the Bottom Nav) */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-2xl px-4 pt-3 pb-6 space-y-1 max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain shadow-2xl animate-in slide-in-from-top-2 duration-200">
-          <Link
-            href="/discover"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-              isActive('/discover') ? 'bg-zinc-800 text-white' : 'text-zinc-200 hover:bg-zinc-900'
-            }`}
-          >
-            <Compass className="w-4 h-4 text-purple-400" />
-            Discover Students
-          </Link>
-          <Link
-            href="/messages"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-              isActive('/messages') ? 'bg-zinc-800 text-white' : 'text-zinc-200 hover:bg-zinc-900'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4 text-teal-400" />
-            Messages
-          </Link>
           <Link
             href="/verify-id"
             onClick={() => setMobileMenuOpen(false)}
@@ -301,31 +272,18 @@ export default function Navbar() {
           )}
 
           {currentUser ? (
-            <>
-              <Link
-                href="/me"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-200 hover:bg-zinc-900"
+            <div className="pt-2 border-t border-zinc-800">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-rose-400 hover:bg-rose-950/30 transition-colors cursor-pointer"
               >
-                <User className="w-4 h-4 text-teal-400" />
-                My Profile
-                {currentUser.verification_status === 'verified' && (
-                  <ShieldCheck className="w-3.5 h-3.5 text-teal-400 ml-auto" />
-                )}
-              </Link>
-              <div className="pt-2 border-t border-zinc-800">
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    logout();
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-rose-400 hover:bg-rose-950/30 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
-                </button>
-              </div>
-            </>
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
           ) : (
             <div className="pt-2 border-t border-zinc-800 flex flex-col gap-2">
               <Link
