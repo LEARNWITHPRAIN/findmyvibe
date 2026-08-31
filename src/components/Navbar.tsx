@@ -34,13 +34,13 @@ export default function Navbar() {
   const isAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Brand Logo & Name */}
-          <div className="flex items-center gap-3">
-            <Link href={currentUser ? '/discover' : '/'} className="flex items-center gap-2.5 group">
-              <div className="relative w-9 h-9 rounded-xl overflow-hidden ring-1 ring-white/10 group-hover:ring-purple-500/50 transition-all shadow-glow-purple">
+    <header className="sticky top-0 z-40 w-full border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-xl">
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-2 sm:gap-4">
+          {/* 1. Left: Brand Logo & Name */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Link href={currentUser ? '/discover' : '/'} className="flex items-center gap-2 sm:gap-2.5 group">
+              <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden ring-1 ring-white/10 group-hover:ring-purple-500/50 transition-all shadow-glow-purple shrink-0">
                 <Image
                   src="/logo.jpg"
                   alt="Find My Vibe Logo"
@@ -49,143 +49,106 @@ export default function Navbar() {
                   priority
                 />
               </div>
-              <div className="flex flex-col">
-                <span className="text-base sm:text-lg font-black tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent group-hover:from-purple-300 group-hover:to-teal-300 transition-all">
-                  Find My Vibe
-                </span>
-              </div>
+              <span className="text-sm sm:text-lg font-black tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent group-hover:from-purple-300 group-hover:to-teal-300 transition-all hidden xs:inline">
+                Find My Vibe
+              </span>
             </Link>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1">
-            <Link
-              href="/discover"
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                isActive('/discover')
-                  ? 'bg-zinc-800 text-white shadow-inner'
-                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
-              }`}
+          {/* 2. Center: 3 Primary Navigation Buttons (Discover, Messages, Profile with Avatar) */}
+          {currentUser && (
+            <nav
+              className="flex items-center p-1 rounded-2xl bg-zinc-900/90 border border-zinc-800/90 shadow-lg backdrop-blur-xl gap-0.5 sm:gap-1.5 mx-auto"
+              aria-label="Main Navigation"
             >
-              <Compass className="w-4 h-4 text-purple-400" />
-              Discover
-            </Link>
-
-            <Link
-              href="/messages"
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                isActive('/messages')
-                  ? 'bg-zinc-800 text-white shadow-inner'
-                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
-              }`}
-            >
-              <MessageSquare className="w-4 h-4 text-teal-400" />
-              Messages
-            </Link>
-
-            <Link
-              href="/verify-id"
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                isActive('/verify-id')
-                  ? 'bg-zinc-800 text-white'
-                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4 text-teal-400" />
-              ID Verification
-            </Link>
-
-            <Link
-              href="/about"
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                isActive('/about')
-                  ? 'bg-zinc-800 text-white'
-                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
-              }`}
-            >
-              <Info className="w-3.5 h-3.5 text-purple-400" />
-              About
-            </Link>
-
-            <button
-              onClick={() => setFeedbackOpen(true)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 transition-all cursor-pointer"
-            >
-              <MessageSquarePlus className="w-3.5 h-3.5 text-teal-400" />
-              Feedback
-            </button>
-
-            {/* Admin link — only for the admin account */}
-            {isAdmin && (
+              {/* Discover Tab */}
               <Link
-                href="/admin/verifications"
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                  isActive('/admin/verifications')
-                    ? 'bg-purple-950/60 border border-purple-500/50 text-purple-300'
-                    : 'text-zinc-500 hover:text-purple-400 hover:bg-purple-950/20'
+                href="/discover"
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  isActive('/discover')
+                    ? 'bg-gradient-to-r from-purple-500/25 via-purple-600/20 to-teal-500/25 border border-purple-500/40 text-white shadow-glow-purple/20 scale-[1.02]'
+                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 font-medium'
                 }`}
+                title="Discover Students"
               >
-                <Layers className="w-3.5 h-3.5" />
-                Admin Review
+                <Compass className={`w-4 h-4 transition-transform duration-300 ${isActive('/discover') ? 'text-purple-400 scale-110' : ''}`} />
+                <span className="hidden sm:inline">Discover</span>
               </Link>
-            )}
-          </nav>
 
-          {/* Right: User Controls */}
-          <div className="hidden md:flex items-center gap-3">
-            {currentUser ? (
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/me"
-                  className="flex items-center gap-2 pl-2 pr-3 py-1 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-xs font-semibold text-zinc-200 transition-colors"
-                >
-                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-teal-400 text-zinc-950 flex items-center justify-center font-bold text-xs overflow-hidden">
-                    {currentUser.avatar_url ? (
-                      <Image src={currentUser.avatar_url} alt={currentUser.full_name} width={24} height={24} className="object-cover w-full h-full" unoptimized />
-                    ) : (
-                      currentUser.full_name?.charAt(0) || 'U'
-                    )}
+              {/* Messages Tab */}
+              <Link
+                href="/messages"
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  isActive('/messages')
+                    ? 'bg-gradient-to-r from-purple-500/25 via-teal-500/25 to-teal-600/20 border border-teal-500/40 text-white shadow-glow-teal/20 scale-[1.02]'
+                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 font-medium'
+                }`}
+                title="Messages"
+              >
+                <MessageSquare className={`w-4 h-4 transition-transform duration-300 ${isActive('/messages') ? 'text-teal-400 scale-110' : ''}`} />
+                <span className="hidden sm:inline">Messages</span>
+              </Link>
+
+              {/* Profile Tab (Instagram style avatar) */}
+              <Link
+                href="/me"
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  isActive('/me')
+                    ? 'bg-gradient-to-r from-rose-500/25 via-purple-500/25 to-purple-600/20 border border-rose-500/40 text-white shadow-glow-purple/20 scale-[1.02]'
+                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 font-medium'
+                }`}
+                title="My Profile"
+              >
+                {currentUser.avatar_url ? (
+                  <div className={`relative w-4 h-4 sm:w-5 sm:h-5 rounded-full overflow-hidden shrink-0 transition-all ${
+                    isActive('/me') ? 'ring-2 ring-rose-400 ring-offset-1 ring-offset-zinc-950 scale-105' : 'ring-1 ring-zinc-700'
+                  }`}>
+                    <Image
+                      src={currentUser.avatar_url}
+                      alt={currentUser.full_name || 'Profile'}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
                   </div>
-                  <span className="max-w-[100px] truncate">{currentUser.full_name}</span>
-                  {currentUser.verification_status === 'verified' && (
-                    <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
-                  )}
-                </Link>
+                ) : (
+                  <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gradient-to-br from-purple-500 to-teal-400 text-zinc-950 flex items-center justify-center font-bold text-[9px] sm:text-[10px] shrink-0 ${
+                    isActive('/me') ? 'ring-2 ring-rose-400 ring-offset-1 ring-offset-zinc-950 scale-105' : ''
+                  }`}>
+                    {(currentUser.full_name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="hidden sm:inline">Profile</span>
+              </Link>
+            </nav>
+          )}
 
-                <button
-                  onClick={() => logout()}
-                  className="p-2 rounded-xl text-zinc-400 hover:text-rose-400 hover:bg-zinc-900 transition-colors"
-                  title="Log out"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
+          {/* 3. Right: Quick Auth on Desktop + 3 Lines Menu Toggle on all devices */}
+          <div className="flex items-center gap-2 shrink-0">
+            {!currentUser && (
               <div className="flex items-center gap-2">
                 <Link
                   href="/login"
-                  className="px-3.5 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors"
+                  className="px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-900 rounded-lg transition-colors"
                 >
                   Login
                 </Link>
                 <Link
                   href="/signup"
-                  className="px-3.5 py-1.5 text-xs font-semibold bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white rounded-lg shadow-glow-purple transition-all"
+                  className="hidden sm:inline-flex px-3 py-1.5 text-xs font-semibold bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white rounded-lg shadow-glow-purple transition-all"
                 >
                   Sign Up
                 </Link>
               </div>
             )}
-          </div>
 
-          {/* Mobile menu toggle */}
-          <div className="flex md:hidden items-center gap-2">
+            {/* 3 Lines Toggle Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+              className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 border border-zinc-800/80 transition-colors cursor-pointer"
               aria-label="Toggle Menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>

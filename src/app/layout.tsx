@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/lib/authContext';
 import { Navbar } from '@/components/Navbar';
-import { BottomNavbar } from '@/components/BottomNavbar';
 import { VerificationBanner } from '@/components/VerificationBanner';
 import { Footer } from '@/components/Footer';
 
@@ -66,10 +65,9 @@ export default function RootLayout({
         <AuthProvider>
           <Navbar />
           <VerificationBanner />
-          <main className="flex-1 flex flex-col pb-20 sm:pb-24">
+          <main className="flex-1 flex flex-col">
             {children}
           </main>
-          <BottomNavbar />
           <Footer />
         </AuthProvider>
       </body>
