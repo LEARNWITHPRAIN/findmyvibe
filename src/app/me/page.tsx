@@ -51,6 +51,7 @@ function MyProfileContent() {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -177,12 +178,14 @@ function MyProfileContent() {
     }
 
     setIsUploadingPhoto(true);
+    setImageError(false);
     try {
       const res = await uploadAvatar(file);
       if (res.error) {
         setPhotoError(res.error);
       } else if (res.url) {
         setAvatarPreview(res.url);
+        setImageError(false);
         await updateProfile({ avatar_url: res.url });
         setShowSavedToast(true);
         setTimeout(() => setShowSavedToast(false), 3500);
@@ -343,13 +346,14 @@ function MyProfileContent() {
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b border-zinc-800">
           <div className="relative group">
             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl overflow-hidden border-2 border-purple-500/40 bg-zinc-950 flex items-center justify-center relative shadow-glow-purple/20">
-              {avatarPreview ? (
+              {avatarPreview && !imageError ? (
                 <Image
                   src={avatarPreview}
                   alt={fullName || 'Avatar'}
                   fill
                   className="object-cover"
-                  sizes="112px"
+                  unoptimized
+                  onError={() => setImageError(true)}
                 />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-900/40 to-teal-900/40 text-zinc-400">
