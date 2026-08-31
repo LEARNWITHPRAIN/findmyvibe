@@ -9,19 +9,21 @@ import { Compass, MessageCircle, User } from 'lucide-react';
 
 export function BottomNavbar() {
   const pathname = usePathname();
-  const { currentUser } = useAuth();
+  const { currentUser, isLoading } = useAuth();
 
-  // Hide bottom bar on specific auth callbacks if any
-  const isAuthCallback = pathname === '/auth/callback';
-  if (isAuthCallback) return null;
+  // ONLY render when user is signed in and NOT on landing page or auth pages
+  if (isLoading || !currentUser) return null;
+  if (pathname === '/' || pathname === '/login' || pathname === '/signup' || pathname === '/auth/callback') {
+    return null;
+  }
 
-  const isDiscoverActive = pathname === '/discover' || pathname === '/';
+  const isDiscoverActive = pathname === '/discover';
   const isMessagesActive = pathname.startsWith('/messages');
   const isProfileActive = pathname === '/me' || (currentUser && pathname === `/profile/${currentUser.id}`);
 
   return (
     <div
-      className="fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-40 w-[min(94%,420px)] pointer-events-auto select-none"
+      className="fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-50 w-[min(94%,420px)] pointer-events-auto select-none"
       role="navigation"
       aria-label="Bottom Navigation"
     >
