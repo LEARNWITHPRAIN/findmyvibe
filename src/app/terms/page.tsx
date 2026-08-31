@@ -12,13 +12,13 @@ import {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-12">
+    <div className="min-h-screen py-8 sm:py-12 px-3.5 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-8 sm:space-y-12">
       {/* Header */}
-      <div className="text-center space-y-3 pt-6">
-        <div className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold">
+      <div className="text-center space-y-2.5 sm:space-y-3 pt-4 sm:pt-6">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold">
           <Scale className="w-3.5 h-3.5" /> Community Guidelines & Rules
         </div>
-        <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
           Terms & Conditions
         </h1>
         <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto leading-relaxed">
@@ -27,7 +27,7 @@ export default function TermsPage() {
       </div>
 
       {/* Prominent Institutional Disclaimer Banner */}
-      <div className="p-6 rounded-3xl bg-zinc-900/90 border border-zinc-800 shadow-xl space-y-2">
+      <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-zinc-900/90 border border-zinc-800 shadow-xl space-y-2">
         <h3 className="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-2">
           <ShieldCheck className="w-4 h-4" /> Institutional Affiliation Notice
         </h3>
@@ -37,7 +37,7 @@ export default function TermsPage() {
       </div>
 
       {/* Content Sections */}
-      <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-2xl space-y-8 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+      <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl sm:rounded-3xl p-4 sm:p-10 backdrop-blur-xl shadow-2xl space-y-6 sm:space-y-8 text-xs sm:text-sm text-zinc-300 leading-relaxed">
         {/* 1. Acceptance */}
         <section className="space-y-2">
           <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">

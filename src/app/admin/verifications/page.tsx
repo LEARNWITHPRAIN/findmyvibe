@@ -15,6 +15,7 @@ import {
   Layers,
   Search,
   Lock,
+  Sparkles,
 } from 'lucide-react';
 
 const ADMIN_EMAIL = 'prakharjain2731@gmail.com';
@@ -80,29 +81,29 @@ export default function AdminVerificationsPage() {
   });
 
   return (
-    <div className="min-h-[88vh] py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-      {/* Toast Notification */}
+    <div className="min-h-screen py-6 sm:py-10 px-3.5 sm:px-6 max-w-6xl mx-auto space-y-6 sm:space-y-8">
+      {/* Toast Alert */}
       {actionSuccessMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-purple-600 text-white px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl flex items-center gap-2 animate-in slide-in-from-bottom-5">
-          <ShieldCheck className="w-4 h-4 text-teal-300" />
+        <div className="fixed top-20 right-4 sm:right-6 z-50 bg-purple-600 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2 animate-in slide-in-from-top-4">
+          <Sparkles className="w-4 h-4" />
           <span>{actionSuccessMessage}</span>
         </div>
       )}
 
       {/* ID Detail Inspection Modal */}
       {selectedProfileForReview && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-2xl w-full p-6 space-y-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl sm:rounded-3xl max-w-2xl w-full p-4 sm:p-6 space-y-5 sm:space-y-6 shadow-2xl relative max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold shrink-0">
                   🪪
                 </div>
-                <div>
-                  <h3 className="font-bold text-white text-base">
+                <div className="min-w-0">
+                  <h3 className="font-bold text-white text-sm sm:text-base truncate">
                     CSJMU ID Inspection: {selectedProfileForReview.full_name}
                   </h3>
-                  <p className="text-xs text-zinc-400">
+                  <p className="text-xs text-zinc-400 truncate">
                     {selectedProfileForReview.department} • Year {selectedProfileForReview.year}
                   </p>
                 </div>
@@ -110,14 +111,14 @@ export default function AdminVerificationsPage() {
 
               <button
                 onClick={() => setSelectedProfileForReview(null)}
-                className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800"
+                className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800 shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* ID Card Display */}
-            <div className="relative w-full h-80 rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+            <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 flex items-center justify-center">
               {selectedProfileForReview.id_card_url ? (
                 selectedProfileForReview.id_card_url.startsWith('data:') ? (
                   <img
@@ -145,7 +146,7 @@ export default function AdminVerificationsPage() {
             </div>
 
             {/* Info details */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-zinc-900/60 p-3.5 rounded-2xl text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 bg-zinc-900/60 p-3 sm:p-3.5 rounded-2xl text-xs">
               <div>
                 <span className="text-zinc-500 block text-[10px]">Student Email</span>
                 <span className="font-semibold text-zinc-200 truncate block">
@@ -171,13 +172,13 @@ export default function AdminVerificationsPage() {
             </div>
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 pt-2">
               <button
                 type="button"
                 onClick={() =>
                   handleAction(selectedProfileForReview.id, 'rejected', selectedProfileForReview.full_name)
                 }
-                className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-bold text-xs border border-rose-500/30 flex items-center gap-1.5 transition-colors"
+                className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-bold text-xs border border-rose-500/30 flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" /> Reject ID
               </button>
@@ -187,7 +188,7 @@ export default function AdminVerificationsPage() {
                 onClick={() =>
                   handleAction(selectedProfileForReview.id, 'verified', selectedProfileForReview.full_name)
                 }
-                className="px-6 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all"
+                className="w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <Check className="w-4 h-4" /> Approve & Verify
               </button>
@@ -197,12 +198,12 @@ export default function AdminVerificationsPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800/80 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-zinc-800/80 pb-5 sm:pb-6">
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold mb-2">
             <Layers className="w-3.5 h-3.5" /> Proctor Portal
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight">
             CSJMU ID Verification Queue
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">

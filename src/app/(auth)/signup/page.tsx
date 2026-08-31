@@ -59,15 +59,15 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center p-4 relative">
+    <div className="min-h-[85vh] flex items-center justify-center p-3.5 sm:p-4 relative">
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-96 h-96 bg-purple-600/15 blur-[120px] pointer-events-none" />
 
-      <div className="w-full max-w-md bg-zinc-900/70 border border-zinc-800 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl relative z-10">
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 mx-auto mb-3 relative rounded-2xl overflow-hidden shadow-lg border border-white/10">
+      <div className="w-full max-w-md bg-zinc-900/70 border border-zinc-800 rounded-2xl sm:rounded-3xl p-5 sm:p-8 backdrop-blur-xl shadow-2xl relative z-10">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-3 relative rounded-2xl overflow-hidden shadow-lg border border-white/10">
             <Image src="/logo.jpg" alt="Find My Vibe" fill className="object-cover" />
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Join Find My Vibe</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">Join Find My Vibe</h1>
           <p className="text-xs text-zinc-400 mt-1">
             Unofficial student network for all CSJMU hostellers, day scholars & campus residents
           </p>

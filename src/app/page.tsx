@@ -53,30 +53,30 @@ export default function LandingPage() {
       <div className="absolute inset-0 bg-dot-grid opacity-30 pointer-events-none" />
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-12 pb-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center flex flex-col items-center">
+      <section className="relative z-10 pt-8 sm:pt-12 pb-14 sm:pb-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center flex flex-col items-center">
         {/* Exclusive Pill */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 text-xs font-semibold text-zinc-300 shadow-xl mb-8 animate-fade-in">
-          <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping" />
+        <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800 text-[11px] sm:text-xs font-semibold text-zinc-300 shadow-xl mb-6 sm:mb-8 animate-fade-in flex-wrap justify-center text-center">
+          <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping shrink-0" />
           <span className="text-teal-400 font-bold">Unofficial Student Network</span>
-          <span className="text-zinc-500">•</span>
+          <span className="text-zinc-500 hidden xs:inline">•</span>
           <span className="text-zinc-200">Hostellers, Day Scholars & All CSJMU Students</span>
         </div>
 
         {/* Mascot Logo Visual Highlight */}
-        <div className="relative mb-6">
-          <div className="w-24 h-24 sm:w-28 sm:h-28 relative rounded-3xl overflow-hidden shadow-2xl shadow-purple-500/20 border-2 border-white/10 p-1 bg-zinc-950">
+        <div className="relative mb-5 sm:mb-6">
+          <div className="w-20 h-20 sm:w-28 sm:h-28 relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl shadow-purple-500/20 border-2 border-white/10 p-1 bg-zinc-950">
             <Image
               src="/logo.jpg"
               alt="Find My Vibe Mascot"
               fill
-              className="object-cover rounded-2xl"
+              className="object-cover rounded-xl sm:rounded-2xl"
               priority
             />
           </div>
         </div>
 
         {/* Headline */}
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white max-w-4xl leading-[1.1] mb-6">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white max-w-4xl leading-[1.15] sm:leading-[1.1] mb-4 sm:mb-6">
           Connect with people like you at{' '}
           <span className="bg-gradient-to-r from-purple-400 via-rose-400 to-teal-300 bg-clip-text text-transparent">
             CSJMU Campus.
@@ -84,15 +84,15 @@ export default function LandingPage() {
         </h1>
 
         {/* Subtitle */}
-        <p className="text-base sm:text-xl text-zinc-400 max-w-2xl font-normal leading-relaxed mb-10">
+        <p className="text-sm sm:text-lg md:text-xl text-zinc-400 max-w-2xl font-normal leading-relaxed mb-8 sm:mb-10 px-2">
           An unofficial peer community for all CSJMU students — match with batchmates across hostels & daily commutes who share your niche hobbies, form hackathon squads, and build lifelong friendships safely.
         </p>
 
         {/* CTAs */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-3.5 sm:gap-4 w-full sm:w-auto">
           <Link
             href="/signup"
-            className="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-sm sm:text-base text-white bg-gradient-to-r from-purple-600 via-rose-500 to-teal-500 hover:from-purple-500 hover:to-teal-400 shadow-glow-purple transition-all duration-200 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 group"
+            className="w-full sm:w-auto px-7 py-3.5 sm:px-8 sm:py-4 rounded-xl font-bold text-sm sm:text-base text-white bg-gradient-to-r from-purple-600 via-rose-500 to-teal-500 hover:from-purple-500 hover:to-teal-400 shadow-glow-purple transition-all duration-200 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 group"
           >
             <span>Get Started — It&apos;s Free</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -100,36 +100,36 @@ export default function LandingPage() {
 
           <Link
             href="/login"
-            className="w-full sm:w-auto px-8 py-4 rounded-xl font-semibold text-sm sm:text-base text-zinc-300 bg-zinc-900/80 hover:bg-zinc-800 hover:text-white border border-zinc-800 transition-all flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-7 py-3.5 sm:px-8 sm:py-4 rounded-xl font-semibold text-sm sm:text-base text-zinc-300 bg-zinc-900/80 hover:bg-zinc-800 hover:text-white border border-zinc-800 transition-all flex items-center justify-center gap-2"
           >
             <span>Log In</span>
           </Link>
         </div>
 
         {/* Trust Stats Row */}
-        <div className="grid grid-cols-3 gap-4 sm:gap-12 mt-16 pt-10 border-t border-zinc-800/80 w-full max-w-3xl">
-          <div className="flex flex-col items-center text-center">
-            <div className="text-2xl sm:text-3xl font-black text-white flex items-center gap-1">
+        <div className="grid grid-cols-3 gap-2 sm:gap-8 md:gap-12 mt-12 sm:mt-16 pt-8 sm:pt-10 border-t border-zinc-800/80 w-full max-w-3xl">
+          <div className="flex flex-col items-center text-center px-1">
+            <div className="text-lg sm:text-2xl md:text-3xl font-black text-white flex items-center gap-1">
               <span>100%</span>
-              <ShieldCheck className="w-5 h-5 text-teal-400" />
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400 shrink-0" />
             </div>
-            <p className="text-[11px] sm:text-xs text-zinc-500 mt-1">ID Verified Members</p>
+            <p className="text-[10px] sm:text-xs text-zinc-500 mt-1 leading-tight">ID Verified Members</p>
           </div>
 
-          <div className="flex flex-col items-center text-center">
-            <div className="text-2xl sm:text-3xl font-black text-rose-400 flex items-center gap-1">
-              <Users className="w-5 h-5" />
+          <div className="flex flex-col items-center text-center px-1">
+            <div className="text-lg sm:text-2xl md:text-3xl font-black text-rose-400 flex items-center gap-1">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
               <span>All</span>
             </div>
-            <p className="text-[11px] sm:text-xs text-zinc-500 mt-1">CSJMU Students Welcome</p>
+            <p className="text-[10px] sm:text-xs text-zinc-500 mt-1 leading-tight">CSJMU Students</p>
           </div>
 
-          <div className="flex flex-col items-center text-center">
-            <div className="text-2xl sm:text-3xl font-black text-purple-400 flex items-center gap-1">
+          <div className="flex flex-col items-center text-center px-1">
+            <div className="text-lg sm:text-2xl md:text-3xl font-black text-purple-400 flex items-center gap-1">
               <span>Unlimited</span>
-              <Sparkles className="w-5 h-5 text-purple-400" />
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 shrink-0" />
             </div>
-            <p className="text-[11px] sm:text-xs text-zinc-500 mt-1">Hobbies & Interests</p>
+            <p className="text-[10px] sm:text-xs text-zinc-500 mt-1 leading-tight">Hobbies & Vibes</p>
           </div>
         </div>
       </section>
@@ -208,13 +208,13 @@ export default function LandingPage() {
       </section>
 
       {/* Demo Discovery Preview Section */}
-      <section className="relative z-10 py-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto border-t border-zinc-900">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+      <section className="relative z-10 py-12 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto border-t border-zinc-900">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 mb-8">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-teal-400 mb-2">
               <Sparkles className="w-3.5 h-3.5" /> Preview — Demo Profiles
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
+            <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight">
               Discover Batchmates by Passion
             </h2>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1">
@@ -222,11 +222,11 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Filter Chips */}
-          <div className="flex flex-wrap gap-1.5 max-w-xl">
+          {/* Filter Chips - Horizontal Scrollable on Mobile */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 max-w-full no-scrollbar">
             <button
               onClick={() => setSelectedHobby(null)}
-              className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all ${
+              className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all shrink-0 cursor-pointer ${
                 selectedHobby === null
                   ? 'bg-white text-zinc-950 border-white font-bold'
                   : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700'
@@ -235,19 +235,20 @@ export default function LandingPage() {
               All Vibes
             </button>
             {INITIAL_HOBBIES.slice(0, 10).map((h) => (
-              <HobbyBadge
-                key={h.id}
-                hobby={h}
-                size="sm"
-                selected={selectedHobby === h.name}
-                onClick={() => setSelectedHobby(selectedHobby === h.name ? null : h.name)}
-              />
+              <div key={h.id} className="shrink-0">
+                <HobbyBadge
+                  hobby={h}
+                  size="sm"
+                  selected={selectedHobby === h.name}
+                  onClick={() => setSelectedHobby(selectedHobby === h.name ? null : h.name)}
+                />
+              </div>
             ))}
           </div>
         </div>
 
         {/* Demo Profile Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {filteredProfiles.map((profile) => (
             <div
               key={profile.id}

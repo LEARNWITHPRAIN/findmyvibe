@@ -76,7 +76,7 @@ export default function VerifyIdPage() {
   const status = currentUser.verification_status;
 
   return (
-    <div className="min-h-[88vh] py-8 px-4 sm:px-6 max-w-3xl mx-auto">
+    <div className="min-h-[88vh] py-6 sm:py-8 px-3.5 sm:px-6 max-w-3xl mx-auto">
       {/* Live Camera Viewfinder Modal */}
       {isCameraOpen && (
         <CameraCapture
@@ -85,10 +85,10 @@ export default function VerifyIdPage() {
         />
       )}
 
-      <div className="bg-zinc-900/70 border border-zinc-800 rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-2xl relative">
+      <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl sm:rounded-3xl p-4 sm:p-10 backdrop-blur-xl shadow-2xl relative">
         {/* Verification Status Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between gap-4 mb-3 flex-wrap">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 text-xs font-semibold">
               <ShieldCheck className="w-3.5 h-3.5" /> University ID Review
             </div>
@@ -116,7 +116,7 @@ export default function VerifyIdPage() {
             )}
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight">
             Verify Your CSJMU Student ID
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
@@ -124,7 +124,7 @@ export default function VerifyIdPage() {
           </p>
 
           {/* Privacy Guarantee Banner */}
-          <div className="mt-4 p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/30 text-xs text-teal-200 flex items-start gap-2.5">
+          <div className="mt-4 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-teal-500/10 border border-teal-500/30 text-xs text-teal-200 flex items-start gap-2.5">
             <ShieldCheck className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
             <p className="leading-relaxed">
               <strong>ID Privacy Guarantee:</strong> Your university ID is collected only to verify your student status. It will not be publicly displayed or used for other purposes. After verification, the uploaded ID will be deleted.

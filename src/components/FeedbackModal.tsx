@@ -67,10 +67,10 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md p-4 sm:p-6 overflow-y-auto flex items-start justify-center"
+      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md p-3 sm:p-6 overflow-y-auto flex items-start justify-center"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="relative w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-3xl p-5 sm:p-8 shadow-2xl shadow-purple-500/10 my-auto shrink-0 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl shadow-purple-500/10 my-auto shrink-0 animate-in fade-in zoom-in-95 duration-200 max-h-[94dvh] overflow-y-auto">
         {/* Ambient glow */}
         <div className="absolute -top-24 -right-24 w-60 h-60 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-60 h-60 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -78,18 +78,18 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
         {/* Close Button — prominent, z-20 to be above glows */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition-colors shadow-lg cursor-pointer"
+          className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-20 w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 hover:text-white flex items-center justify-center transition-colors shadow-lg cursor-pointer"
           aria-label="Close modal"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Modal Header */}
-        <div className="mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold mb-3">
+        <div className="mb-5 sm:mb-6 pr-8">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold mb-2.5">
             <MessageSquarePlus className="w-3.5 h-3.5" /> Built by Students, For Students
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+          <h2 className="text-lg sm:text-2xl font-black text-white tracking-tight">
             Share Your Feedback & Vibes
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1 leading-relaxed">
@@ -111,14 +111,14 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
                   key={cat.id}
                   type="button"
                   onClick={() => setCategory(cat.id)}
-                  className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all ${
+                  className={`p-2 sm:p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-purple-500/20 border-purple-500 text-white font-bold shadow-glow-purple'
                       : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isSelected ? 'text-purple-400' : 'text-zinc-500'}`} />
-                  <span className="text-xs truncate">{cat.label}</span>
+                  <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${isSelected ? 'text-purple-400' : 'text-zinc-500'}`} />
+                  <span className="text-[11px] sm:text-xs truncate">{cat.label}</span>
                 </button>
               );
             })}
@@ -169,10 +169,10 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
           </button>
 
           {/* Secondary Action Row: Default Mail Client & Copy Email */}
-          <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-800/80 text-xs">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2 border-t border-zinc-800/80 text-xs">
             <a
               href={mailtoUrl}
-              className="text-zinc-400 hover:text-zinc-200 inline-flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg hover:bg-zinc-800 transition-colors"
+              className="text-zinc-400 hover:text-zinc-200 inline-flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2.5 rounded-lg hover:bg-zinc-800 transition-colors"
             >
               <Send className="w-3.5 h-3.5 text-teal-400" />
               <span>Use Default Mail App</span>
@@ -181,7 +181,7 @@ export function FeedbackModal({ isOpen, onClose }: FeedbackModalProps) {
             <button
               type="button"
               onClick={handleCopyEmail}
-              className="text-zinc-400 hover:text-zinc-200 inline-flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg hover:bg-zinc-800 transition-colors"
+              className="text-zinc-400 hover:text-zinc-200 inline-flex items-center justify-center gap-1.5 py-2 sm:py-1.5 px-2.5 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               {copied ? (
                 <>

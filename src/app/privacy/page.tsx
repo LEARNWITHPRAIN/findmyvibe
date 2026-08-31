@@ -13,13 +13,13 @@ import {
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-12">
+    <div className="min-h-screen py-8 sm:py-12 px-3.5 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-8 sm:space-y-12">
       {/* Header */}
-      <div className="text-center space-y-3 pt-6">
-        <div className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 text-xs font-semibold">
+      <div className="text-center space-y-2.5 sm:space-y-3 pt-4 sm:pt-6">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 text-xs font-semibold">
           <Lock className="w-3.5 h-3.5" /> Privacy First • Student Centric
         </div>
-        <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
           Privacy Policy
         </h1>
         <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto leading-relaxed">
@@ -28,18 +28,18 @@ export default function PrivacyPolicyPage() {
       </div>
 
       {/* Prominent ID Privacy Pledge Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-teal-950/40 via-zinc-900 to-purple-950/40 border border-teal-500/40 shadow-xl space-y-3">
-        <div className="flex items-center gap-2 text-teal-400 font-bold text-sm">
-          <ShieldCheck className="w-5 h-5 text-teal-400" />
+      <div className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-teal-950/40 via-zinc-900 to-purple-950/40 border border-teal-500/40 shadow-xl space-y-2.5 sm:space-y-3">
+        <div className="flex items-center gap-2 text-teal-400 font-bold text-xs sm:text-sm">
+          <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400" />
           <span>Our Student ID Privacy Guarantee</span>
         </div>
-        <p className="text-sm sm:text-base font-semibold text-white leading-relaxed">
+        <p className="text-xs sm:text-base font-semibold text-white leading-relaxed">
           &ldquo;Your university ID is collected only to verify your student status. It will not be publicly displayed or used for other purposes. After verification, the uploaded ID will be deleted.&rdquo;
         </p>
       </div>
 
       {/* Detailed Sections */}
-      <div className="bg-zinc-900/60 border border-zinc-800 rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-2xl space-y-8 text-xs sm:text-sm text-zinc-300 leading-relaxed">
+      <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl sm:rounded-3xl p-4 sm:p-10 backdrop-blur-xl shadow-2xl space-y-6 sm:space-y-8 text-xs sm:text-sm text-zinc-300 leading-relaxed">
         {/* 1. What We Collect */}
         <section className="space-y-3">
           <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">

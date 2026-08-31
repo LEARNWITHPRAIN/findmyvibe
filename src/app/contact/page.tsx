@@ -37,13 +37,13 @@ export default function ContactPage() {
   const mailtoUrl = `mailto:${targetEmail}?subject=${emailSubjectEncoded}&body=${emailBodyEncoded}`;
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-12">
+    <div className="min-h-screen py-8 sm:py-12 px-3.5 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-8 sm:space-y-12">
       {/* Header */}
-      <div className="text-center space-y-3 pt-6">
-        <div className="inline-flex items-center gap-1.5 px-4 py-1 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 text-xs font-semibold">
+      <div className="text-center space-y-2.5 sm:space-y-3 pt-4 sm:pt-6">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 text-xs font-semibold">
           <Mail className="w-3.5 h-3.5" /> Direct Student Support
         </div>
-        <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
           Contact <span className="bg-gradient-to-r from-purple-400 via-rose-400 to-teal-300 bg-clip-text text-transparent">Find My Vibe</span>
         </h1>
         <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto leading-relaxed">
@@ -52,11 +52,11 @@ export default function ContactPage() {
       </div>
 
       {/* Main Grid: Info + Direct Email Launcher */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8">
         {/* Left Col: Contact Quick Card (5 cols) */}
-        <div className="md:col-span-5 space-y-6">
+        <div className="md:col-span-5 space-y-5 sm:space-y-6">
           {/* Email Address Highlight Card */}
-          <div className="p-6 rounded-3xl bg-zinc-900/80 border border-zinc-800 shadow-xl space-y-4">
+          <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-zinc-900/80 border border-zinc-800 shadow-xl space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
               <Mail className="w-6 h-6" />
             </div>

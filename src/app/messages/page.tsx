@@ -336,12 +336,12 @@ function MessagesContent() {
                           <div className="relative flex items-center gap-2 group/bubble">
                             {/* Action Buttons for own messages */}
                             {isMine && (
-                              <div className="opacity-0 group-hover/bubble:opacity-100 transition-opacity flex items-center gap-1 bg-zinc-900 border border-zinc-800 px-1.5 py-1 rounded-xl shadow-lg">
+                              <div className="opacity-80 sm:opacity-0 group-hover/bubble:opacity-100 transition-opacity flex items-center gap-1 bg-zinc-900 border border-zinc-800 px-1.5 py-1 rounded-xl shadow-lg shrink-0">
                                 <button
                                   type="button"
                                   onClick={() => handleStartEdit(msg.id, msg.content)}
                                   title="Edit message"
-                                  className="p-1 rounded-lg text-zinc-400 hover:text-purple-300 hover:bg-zinc-800 transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-lg text-zinc-400 hover:text-purple-300 hover:bg-zinc-800 transition-colors cursor-pointer"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
                                 </button>
@@ -349,7 +349,7 @@ function MessagesContent() {
                                   type="button"
                                   onClick={() => handleDelete(msg.id)}
                                   title="Unsend / Delete message"
-                                  className="p-1 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 transition-colors cursor-pointer"
+                                  className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 transition-colors cursor-pointer"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>

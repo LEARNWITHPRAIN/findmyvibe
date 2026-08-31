@@ -215,14 +215,14 @@ export default function OnboardingPage() {
   const hasZeroMatches = isSearchActive && visibleHobbyNames.length === 0;
 
   return (
-    <div className="min-h-[88vh] py-12 px-4 sm:px-6 max-w-2xl mx-auto">
-      <div className="bg-zinc-900/70 border border-zinc-800 rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-2xl relative">
+    <div className="min-h-[88vh] py-6 sm:py-12 px-3.5 sm:px-6 max-w-2xl mx-auto">
+      <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl sm:rounded-3xl p-4 sm:p-10 backdrop-blur-xl shadow-2xl relative">
         {/* Header */}
-        <div className="mb-8">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold mb-3">
+        <div className="mb-6 sm:mb-8">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold mb-2.5">
             <Sparkles className="w-3.5 h-3.5" /> Step 1 of 2: Profile Setup
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight">
             Complete Your Student Profile
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
@@ -230,7 +230,7 @@ export default function OnboardingPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
           {/* Full Name */}
           <div>
             <label className="block text-xs font-semibold text-zinc-300 mb-1.5">

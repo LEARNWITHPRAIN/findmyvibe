@@ -48,12 +48,12 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md bg-zinc-900/70 border border-zinc-800 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl relative z-10">
-      <div className="text-center mb-8">
-        <div className="w-14 h-14 mx-auto mb-3 relative rounded-2xl overflow-hidden shadow-lg border border-white/10">
+    <div className="w-full max-w-md bg-zinc-900/70 border border-zinc-800 rounded-2xl sm:rounded-3xl p-5 sm:p-8 backdrop-blur-xl shadow-2xl relative z-10">
+      <div className="text-center mb-6 sm:mb-8">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-3 relative rounded-2xl overflow-hidden shadow-lg border border-white/10">
           <Image src="/logo.jpg" alt="Find My Vibe" fill className="object-cover" />
         </div>
-        <h1 className="text-2xl font-black text-white tracking-tight">Welcome Back</h1>
+        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">Welcome Back</h1>
         <p className="text-xs text-zinc-400 mt-1">Log in to your Find My Vibe account</p>
       </div>
 

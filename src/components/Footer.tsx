@@ -60,10 +60,10 @@ export function Footer() {
                 An independent peer connection network built by students, for all CSJMU students — whether you&apos;re a hosteller, residential campus resident, or day scholar. Match vibes, form hackathon squads, and vibe check safely.
               </p>
 
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-2">
                 <button
                   onClick={() => setFeedbackOpen(true)}
-                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-semibold transition-all hover:scale-[1.02] cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-semibold transition-all hover:scale-[1.02] cursor-pointer"
                 >
                   <MessageSquarePlus className="w-3.5 h-3.5" />
                   <span>Give Feedback / Request Feature</span>
@@ -71,7 +71,7 @@ export function Footer() {
 
                 <a
                   href="mailto:findmyvibe.fun@gmail.com"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-medium transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-medium transition-colors"
                 >
                   <Mail className="w-3.5 h-3.5 text-teal-400" />
                   <span>findmyvibe.fun@gmail.com</span>

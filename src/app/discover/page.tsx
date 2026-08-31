@@ -80,14 +80,14 @@ export default function DiscoverPage() {
 
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen py-6 sm:py-8 px-3.5 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
       {/* Header & Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/80 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/80 pb-5 sm:pb-6">
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold mb-2">
             <Compass className="w-3.5 h-3.5" /> CSJMU Campus Feed
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight">
             Discover Your Campus Vibe
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
@@ -96,10 +96,10 @@ export default function DiscoverPage() {
         </div>
 
         {/* Verification Status Pill */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           {isVerified ? (
-            <div className="px-3.5 py-2 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-teal-400" />
+            <div className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs flex items-center justify-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-teal-400 shrink-0" />
               <span>
                 <strong>Verified View:</strong> Full profiles & messaging active
               </span>
@@ -107,9 +107,9 @@ export default function DiscoverPage() {
           ) : (
             <Link
               href="/verify-id"
-              className="px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 hover:bg-rose-500/20 transition-colors"
+              className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-center gap-2 hover:bg-rose-500/20 transition-colors"
             >
-              <ShieldAlert className="w-4 h-4 text-rose-400" />
+              <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
               <span>
                 <strong>Restricted View:</strong> Verify ID to unlock full photos
               </span>
@@ -119,17 +119,17 @@ export default function DiscoverPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 sm:p-5 space-y-4">
+      <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-3.5 sm:p-5 space-y-3.5 sm:space-y-4">
         {/* Search input */}
         <div className="relative">
-          <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={
               isVerified
-                ? 'Search students by name, hobby, or department (e.g. Coding, UIET, Dancing)...'
+                ? 'Search students by name, hobby, or course...'
                 : 'Search students by name or hobby...'
             }
             className="w-full bg-zinc-950/80 border border-zinc-800 focus:border-purple-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none transition-colors"
@@ -137,9 +137,9 @@ export default function DiscoverPage() {
         </div>
 
         {/* Hobby and Year Filter Row */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
           {/* Hobby Chips - Scrollable Row */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 max-w-full no-scrollbar">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 w-full sm:max-w-[75%] no-scrollbar">
             <span className="text-xs font-semibold text-zinc-400 mr-1 flex items-center gap-1 shrink-0">
               <Filter className="w-3 h-3 text-purple-400" /> Vibes:
             </span>
@@ -166,7 +166,7 @@ export default function DiscoverPage() {
           </div>
 
           {/* Year selector */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
             <span className="text-xs text-zinc-500">Year:</span>
             <select
               value={selectedYear || ''}
@@ -185,7 +185,7 @@ export default function DiscoverPage() {
 
       {/* Profile Grid Results */}
       {filteredProfiles.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredProfiles.map((profile) => (
             <StudentCard key={profile.id} profile={profile} />
           ))}

@@ -273,12 +273,12 @@ function MyProfileContent() {
   const hasZeroMatches = isSearchActive && visibleHobbyNames.length === 0;
 
   return (
-    <div className="min-h-[85vh] py-8 px-4 sm:px-6 max-w-3xl mx-auto space-y-6">
+    <div className="min-h-[85vh] py-6 sm:py-8 px-3.5 sm:px-6 max-w-3xl mx-auto space-y-5 sm:space-y-6">
       {/* Setup / Verification Banner */}
       {(isSetupFlow || isEmailVerifiedRedirect) && (
-        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-purple-950/80 via-zinc-900 to-teal-950/80 border border-teal-500/40 shadow-xl flex items-start gap-3.5 animate-in fade-in slide-in-from-top-4">
-          <div className="w-10 h-10 rounded-2xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center text-teal-300 shrink-0">
-            <Sparkles className="w-5 h-5" />
+        <div className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-purple-950/80 via-zinc-900 to-teal-950/80 border border-teal-500/40 shadow-xl flex items-start gap-3.5 animate-in fade-in slide-in-from-top-4">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-teal-500/20 border border-teal-500/40 flex items-center justify-center text-teal-300 shrink-0 mt-0.5">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
             <h3 className="text-sm sm:text-base font-bold text-white">
@@ -293,16 +293,16 @@ function MyProfileContent() {
 
       {/* Toast */}
       {showSavedToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-emerald-500 text-zinc-950 px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl flex items-center gap-2 animate-in slide-in-from-bottom-5">
-          <CheckCircle2 className="w-4 h-4" />
+        <div className="fixed bottom-6 left-4 right-4 sm:left-auto sm:right-6 max-w-sm sm:max-w-md mx-auto z-50 bg-emerald-500 text-zinc-950 px-4 py-3 rounded-2xl font-bold text-xs shadow-2xl flex items-center gap-2 animate-in slide-in-from-bottom-5">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>Profile saved successfully!</span>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-zinc-800 pb-5 sm:pb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight">
             My Campus Profile
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
@@ -311,7 +311,7 @@ function MyProfileContent() {
         </div>
 
         {/* Verification Pill */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           {status === 'verified' && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-semibold">
               <ShieldCheck className="w-4 h-4 text-teal-400" /> CSJMU Verified
@@ -322,7 +322,7 @@ function MyProfileContent() {
               href="/verify-id"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold hover:bg-amber-500/20 transition-colors"
             >
-              <Clock className="w-4 h-4 text-amber-400" /> ID Verification Under Review
+              <Clock className="w-4 h-4 text-amber-400" /> ID Under Review
             </Link>
           )}
           {(status === 'unverified' || status === 'rejected') && (
@@ -338,7 +338,7 @@ function MyProfileContent() {
       </div>
 
       {/* Main Profile Card */}
-      <div className="bg-zinc-900/70 border border-zinc-800 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl space-y-8">
+      <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl sm:rounded-3xl p-4 sm:p-8 backdrop-blur-xl shadow-2xl space-y-6 sm:space-y-8">
         {/* Photo Upload Section */}
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b border-zinc-800">
           <div className="relative group">

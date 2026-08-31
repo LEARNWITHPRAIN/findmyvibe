@@ -98,23 +98,23 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="relative w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+      <div className="relative w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[96dvh] overflow-y-auto">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800 bg-zinc-900/60">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400">
+        <div className="flex items-center justify-between px-4 py-3.5 sm:px-5 sm:py-4 border-b border-zinc-800 bg-zinc-900/60 shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 shrink-0">
               <Camera className="w-4 h-4" />
             </div>
-            <div>
-              <h3 className="font-semibold text-zinc-100 text-sm sm:text-base">Live CSJMU ID Verification</h3>
-              <p className="text-xs text-zinc-400">Hold your ID card clearly next to your face</p>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-zinc-100 text-xs sm:text-base truncate">Live CSJMU ID Verification</h3>
+              <p className="text-[11px] sm:text-xs text-zinc-400 truncate">Hold ID card clearly next to your face</p>
             </div>
           </div>
           {onClose && (
             <button
               onClick={onClose}
-              className="text-zinc-400 hover:text-zinc-100 p-1.5 rounded-lg hover:bg-zinc-800 transition-colors"
+              className="text-zinc-400 hover:text-zinc-100 p-1.5 rounded-lg hover:bg-zinc-800 transition-colors shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
@@ -122,7 +122,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
         </div>
 
         {/* Viewfinder / Capture Area */}
-        <div className="relative bg-black aspect-[4/3] sm:aspect-[16/9] flex items-center justify-center overflow-hidden">
+        <div className="relative bg-black aspect-[4/3] sm:aspect-[16/9] max-h-[48vh] sm:max-h-[60vh] flex items-center justify-center overflow-hidden shrink-0">
           {cameraError ? (
             <div className="p-6 text-center max-w-md">
               <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-3" />
@@ -159,17 +159,17 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
               />
 
               {/* ID Card Framing Overlay Guide */}
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-6">
-                <div className="w-full h-full border-2 border-dashed border-teal-400/40 rounded-xl relative flex flex-col justify-between p-4">
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-4 sm:p-6">
+                <div className="w-full h-full border-2 border-dashed border-teal-400/40 rounded-xl relative flex flex-col justify-between p-3 sm:p-4">
                   {/* ID Guide box on bottom left */}
-                  <div className="self-end bg-purple-950/70 border border-purple-400/50 rounded-lg p-2.5 backdrop-blur-sm max-w-[200px] text-right">
-                    <p className="text-[11px] font-semibold text-purple-300">🪪 Hold CSJMU ID here</p>
-                    <p className="text-[9px] text-zinc-400">Ensure roll number & photo are legible</p>
+                  <div className="self-end bg-purple-950/80 border border-purple-400/50 rounded-lg p-2 sm:p-2.5 backdrop-blur-sm max-w-[170px] sm:max-w-[200px] text-right">
+                    <p className="text-[10px] sm:text-[11px] font-semibold text-purple-300">🪪 Hold CSJMU ID here</p>
+                    <p className="text-[8.5px] sm:text-[9px] text-zinc-400">Ensure roll number is legible</p>
                   </div>
                   {/* Face Guide on right */}
-                  <div className="self-start bg-teal-950/70 border border-teal-400/50 rounded-lg p-2.5 backdrop-blur-sm max-w-[200px]">
-                    <p className="text-[11px] font-semibold text-teal-300">👤 Your Face</p>
-                    <p className="text-[9px] text-zinc-400">Position face within camera view</p>
+                  <div className="self-start bg-teal-950/80 border border-teal-400/50 rounded-lg p-2 sm:p-2.5 backdrop-blur-sm max-w-[170px] sm:max-w-[200px]">
+                    <p className="text-[10px] sm:text-[11px] font-semibold text-teal-300">👤 Your Face</p>
+                    <p className="text-[8.5px] sm:text-[9px] text-zinc-400">Keep face in camera view</p>
                   </div>
                 </div>
               </div>
@@ -178,7 +178,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
               <button
                 type="button"
                 onClick={toggleFacingMode}
-                className="absolute top-4 right-4 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 p-2.5 rounded-full backdrop-blur-md border border-zinc-700 transition-all shadow-lg"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 p-2.5 rounded-full backdrop-blur-md border border-zinc-700 transition-all shadow-lg cursor-pointer"
                 title="Switch Camera"
               >
                 <SwitchCamera className="w-4 h-4" />
@@ -190,28 +190,28 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
         </div>
 
         {/* Action Controls */}
-        <div className="px-5 py-4 bg-zinc-900 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
-            <Shield className="w-4 h-4 text-teal-400 shrink-0" />
-            <span>Encrypted & reviewed exclusively by CSJMU Proctor Admins.</span>
+        <div className="px-4 py-3 sm:px-5 sm:py-4 bg-zinc-900 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 shrink-0">
+          <div className="flex items-center gap-2 text-[11px] sm:text-xs text-zinc-400 text-center sm:text-left">
+            <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-400 shrink-0" />
+            <span>Encrypted & reviewed strictly by CSJMU Proctor Admins.</span>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
             {capturedImage ? (
               <>
                 <button
                   type="button"
                   onClick={handleRetake}
-                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <RefreshCw className="w-4 h-4" /> Retake
+                  <RefreshCw className="w-3.5 h-3.5" /> Retake
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirm}
-                  className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-semibold text-sm shadow-glow-purple transition-all flex items-center justify-center gap-2"
+                  className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white font-semibold text-xs sm:text-sm shadow-glow-purple transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <CheckCircle2 className="w-4 h-4" /> Use This Photo
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Use Photo
                 </button>
               </>
             ) : (
@@ -219,7 +219,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
                 type="button"
                 onClick={handleCapture}
                 disabled={isInitializing || !!cameraError}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-rose-500 to-teal-500 hover:opacity-90 text-white text-sm font-bold shadow-lg shadow-purple-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 via-rose-500 to-teal-500 hover:opacity-90 text-white text-xs sm:text-sm font-bold shadow-lg shadow-purple-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 <Camera className="w-4 h-4" /> Capture Snapshot
               </button>
