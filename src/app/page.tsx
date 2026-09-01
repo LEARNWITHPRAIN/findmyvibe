@@ -222,28 +222,37 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Filter Chips - Horizontal Scrollable on Mobile */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 max-w-full no-scrollbar">
-            <button
-              onClick={() => setSelectedHobby(null)}
-              className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all shrink-0 cursor-pointer ${
-                selectedHobby === null
-                  ? 'bg-white text-zinc-950 border-white font-bold'
-                  : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700'
-              }`}
-            >
-              All Vibes
-            </button>
-            {INITIAL_HOBBIES.slice(0, 10).map((h) => (
-              <div key={h.id} className="shrink-0">
-                <HobbyBadge
-                  hobby={h}
-                  size="sm"
-                  selected={selectedHobby === h.name}
-                  onClick={() => setSelectedHobby(selectedHobby === h.name ? null : h.name)}
-                />
-              </div>
-            ))}
+          {/* Filter Chips - Horizontal Scrollable on Mobile, with fade-right affordance */}
+          <div className="relative max-w-full min-w-0">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar">
+              <button
+                onClick={() => setSelectedHobby(null)}
+                className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all shrink-0 cursor-pointer ${
+                  selectedHobby === null
+                    ? 'bg-white text-zinc-950 border-white font-bold'
+                    : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700'
+                }`}
+              >
+                All Vibes
+              </button>
+              {INITIAL_HOBBIES.slice(0, 10).map((h) => (
+                <div key={h.id} className="shrink-0">
+                  <HobbyBadge
+                    hobby={h}
+                    size="sm"
+                    selected={selectedHobby === h.name}
+                    onClick={() => setSelectedHobby(selectedHobby === h.name ? null : h.name)}
+                  />
+                </div>
+              ))}
+              {/* Trailing spacer so last chip clears the fade */}
+              <div className="w-8 shrink-0" aria-hidden="true" />
+            </div>
+            {/* Right-edge fade gradient — visual affordance for hidden chips */}
+            <div
+              className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#0A0A0B]/90 to-transparent"
+              aria-hidden="true"
+            />
           </div>
         </div>
 

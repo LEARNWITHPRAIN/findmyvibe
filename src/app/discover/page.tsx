@@ -137,37 +137,49 @@ export default function DiscoverPage() {
         </div>
 
         {/* Hobby and Year Filter Row */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
-          {/* Hobby Chips - Scrollable Row */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 w-full sm:max-w-[75%] no-scrollbar">
-            <span className="text-xs font-semibold text-zinc-400 mr-1 flex items-center gap-1 shrink-0">
+        <div className="flex flex-col gap-3 pt-1">
+          {/* Hobby Chips row with fade-right affordance */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-zinc-400 flex items-center gap-1 shrink-0">
               <Filter className="w-3 h-3 text-purple-400" /> Vibes:
             </span>
-            <button
-              onClick={() => setSelectedHobby(null)}
-              className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all shrink-0 cursor-pointer ${
-                selectedHobby === null
-                  ? 'bg-white text-zinc-950 border-white font-bold'
-                  : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-700'
-              }`}
-            >
-              All Vibes
-            </button>
-            {hobbies.map((hobby) => (
-              <div key={hobby.id} className="shrink-0">
-                <HobbyBadge
-                  hobby={hobby}
-                  size="sm"
-                  selected={selectedHobby === hobby.name}
-                  onClick={() => setSelectedHobby(selectedHobby === hobby.name ? null : hobby.name)}
-                />
+            {/* Scroll container with fade-right gradient to indicate more chips */}
+            <div className="relative flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                <button
+                  onClick={() => setSelectedHobby(null)}
+                  className={`px-3 py-1 text-xs font-semibold rounded-full border transition-all shrink-0 cursor-pointer ${
+                    selectedHobby === null
+                      ? 'bg-white text-zinc-950 border-white font-bold'
+                      : 'bg-zinc-950 text-zinc-400 border-zinc-800 hover:border-zinc-700'
+                  }`}
+                >
+                  All Vibes
+                </button>
+                {hobbies.map((hobby) => (
+                  <div key={hobby.id} className="shrink-0">
+                    <HobbyBadge
+                      hobby={hobby}
+                      size="sm"
+                      selected={selectedHobby === hobby.name}
+                      onClick={() => setSelectedHobby(selectedHobby === hobby.name ? null : hobby.name)}
+                    />
+                  </div>
+                ))}
+                {/* Trailing spacer so last chip clears the fade */}
+                <div className="w-6 shrink-0" aria-hidden="true" />
               </div>
-            ))}
+              {/* Right-edge fade gradient — visual affordance for hidden chips */}
+              <div
+                className="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-zinc-900/90 to-transparent"
+                aria-hidden="true"
+              />
+            </div>
           </div>
 
-          {/* Year selector */}
-          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-            <span className="text-xs text-zinc-500">Year:</span>
+          {/* Year selector — own row on mobile, inline on sm+ */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-zinc-500 shrink-0">Year:</span>
             <select
               value={selectedYear || ''}
               onChange={(e) => setSelectedYear(e.target.value || null)}

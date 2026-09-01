@@ -121,15 +121,16 @@ export function StudentCard({ profile }: StudentCardProps) {
       </div>
 
       {/* Card Footer Actions */}
-      <div className="px-4 sm:px-5 py-3 sm:py-3.5 border-t border-zinc-800/80 bg-zinc-950/40 flex items-center justify-between gap-2 sm:gap-3">
-        <span className="text-[10px] sm:text-[11px] text-zinc-500 flex items-center gap-1 truncate">
+      <div className="px-4 sm:px-5 py-3 sm:py-3.5 border-t border-zinc-800/80 bg-zinc-950/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <span className="text-[10px] sm:text-[11px] text-zinc-500 flex items-center gap-1">
           <MapPin className="w-3 h-3 text-zinc-600 shrink-0" /> CSJMU Campus
         </span>
 
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {/* Action buttons — always fully visible, stacked below campus label on mobile */}
+        <div className="flex items-center gap-2 sm:gap-2">
           <Link
             href={`/profile/${profile.id}`}
-            className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="flex-1 sm:flex-none text-center px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 border border-zinc-700/50 transition-colors"
           >
             Profile
           </Link>
@@ -138,7 +139,7 @@ export function StudentCard({ profile }: StudentCardProps) {
             isViewerVerified ? (
               <Link
                 href={`/messages?user=${profile.id}`}
-                className="px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white shadow-sm flex items-center gap-1.5 transition-all"
+                className="flex-1 sm:flex-none text-center px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-purple-600 to-teal-500 hover:from-purple-500 hover:to-teal-400 text-white shadow-sm flex items-center justify-center gap-1.5 transition-all"
               >
                 <MessageSquare className="w-3.5 h-3.5" /> Chat
               </Link>
@@ -147,7 +148,7 @@ export function StudentCard({ profile }: StudentCardProps) {
                 type="button"
                 disabled
                 title="Verify your CSJMU ID to start messaging"
-                className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800/80 text-zinc-500 border border-zinc-700/50 cursor-not-allowed flex items-center gap-1.5 opacity-60"
+                className="flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800/80 text-zinc-500 border border-zinc-700/50 cursor-not-allowed flex items-center justify-center gap-1.5 opacity-60"
               >
                 <Lock className="w-3 h-3 text-amber-500" /> Message
               </button>
