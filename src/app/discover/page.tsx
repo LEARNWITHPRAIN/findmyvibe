@@ -18,7 +18,7 @@ import {
 
 export default function DiscoverPage() {
   const router = useRouter();
-  const { profiles, hobbies, currentUser, isLoading } = useAuth();
+  const { profiles, hobbies, blockedUsers, currentUser, isLoading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHobby, setSelectedHobby] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
@@ -32,12 +32,21 @@ export default function DiscoverPage() {
 
   const isVerified = currentUser?.verification_status === 'verified';
 
-  // Show only real (non-demo) profiles in the discover feed
-  const realProfiles = profiles.filter((p) => !p.is_demo);
+  // Show only active, non-banned, real profiles in discover feed
+  const realProfiles = profiles.filter((p) => !p.is_demo && !p.is_banned);
 
   // Filter profiles based on search, hobby, and year
   const filteredProfiles = realProfiles.filter((profile) => {
     if (currentUser && profile.id === currentUser.id) return false;
+
+    // Filter out users that are blocked
+    const isBlocked = blockedUsers?.some(
+      (b) =>
+        (b.blocker_id === currentUser?.id && b.blocked_id === profile.id) ||
+        (b.blocker_id === profile.id && b.blocked_id === currentUser?.id)
+    );
+    if (isBlocked) return false;
+
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();

@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Profile, Hobby, Message, VerificationStatus } from './types';
-import { INITIAL_HOBBIES, INITIAL_MESSAGES, INITIAL_PROFILES } from './mockData';
+import { Profile, Hobby, Message, VerificationStatus, BlockedUser, UserReport, ReportStatus } from './types';
+import { INITIAL_HOBBIES } from './mockData';
 import { createClient } from './supabase/client';
 
 const ADMIN_EMAIL = 'prakharjain2731@gmail.com';
@@ -13,6 +13,8 @@ interface AuthContextType {
   profiles: Profile[];
   hobbies: Hobby[];
   messages: Message[];
+  blockedUsers: BlockedUser[];
+  reports: UserReport[];
   isLoading: boolean;
   isLogingOut: boolean;
   login: (email: string, pass: string) => Promise<{ error?: string; profile?: Profile; isProfileComplete?: boolean }>;
@@ -25,6 +27,12 @@ interface AuthContextType {
   sendMessage: (receiverId: string, content: string) => Promise<{ success: boolean; error?: string }>;
   editMessage: (messageId: string, newContent: string) => Promise<{ success: boolean; error?: string }>;
   deleteMessage: (messageId: string) => Promise<{ success: boolean; error?: string }>;
+  blockUser: (targetUserId: string) => Promise<{ success: boolean; error?: string }>;
+  unblockUser: (targetUserId: string) => Promise<{ success: boolean; error?: string }>;
+  reportUser: (reportedUserId: string, reason: string, details?: string, alsoBlock?: boolean) => Promise<{ success: boolean; error?: string }>;
+  banUser: (userId: string, reason?: string) => Promise<{ success: boolean; error?: string }>;
+  unbanUser: (userId: string) => Promise<{ success: boolean; error?: string }>;
+  updateReportStatus: (reportId: string, status: ReportStatus) => Promise<{ success: boolean; error?: string }>;
   refreshSession: () => Promise<void>;
 }
 
@@ -90,6 +98,9 @@ async function fetchProfile(
       hobbies: Array.isArray(hobbies) ? hobbies : [],
       verification_status: data.verification_status || 'unverified',
       is_admin: isAdmin,
+      is_banned: Boolean(data.is_banned),
+      ban_reason: data.ban_reason || null,
+      banned_at: data.banned_at || null,
       email_verified: true,
     } as Profile;
   } catch (e) {
@@ -126,12 +137,14 @@ async function fetchAllProfiles(supabase: ReturnType<typeof createClient>): Prom
         hobbies: Array.isArray(hobbies) ? hobbies : [],
         verification_status: (row.verification_status as string) || 'unverified',
         is_admin: isAdmin,
+        is_banned: Boolean(row.is_banned),
+        ban_reason: (row.ban_reason as string) || null,
+        banned_at: (row.banned_at as string) || null,
         is_demo: false,
         email_verified: true,
       } as Profile;
     });
 
-    // Return ONLY real Supabase profiles — no demo/mock data
     return realProfiles;
   } catch (e) {
     console.error('fetchAllProfiles error', e);
@@ -151,9 +164,57 @@ async function fetchUserMessages(supabase: ReturnType<typeof createClient>, user
       .order('created_at', { ascending: true });
 
     if (error || !data) return [];
-
-    // Return only real Supabase messages — no demo/mock messages
     return data as Message[];
+  } catch {
+    return [];
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper: load blocked users
+// ─────────────────────────────────────────────────────────────────────────────
+async function fetchBlockedUsers(
+  supabase: ReturnType<typeof createClient>,
+  userId: string
+): Promise<BlockedUser[]> {
+  try {
+    const { data, error } = await supabase
+      .from('blocked_users')
+      .select('*')
+      .or(`blocker_id.eq.${userId},blocked_id.eq.${userId}`);
+
+    if (error || !data) return [];
+    return data as BlockedUser[];
+  } catch {
+    return [];
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper: load user reports
+// ─────────────────────────────────────────────────────────────────────────────
+async function fetchReports(
+  supabase: ReturnType<typeof createClient>,
+  isAdmin: boolean,
+  userId?: string
+): Promise<UserReport[]> {
+  try {
+    let query = supabase
+      .from('user_reports')
+      .select('*, reporter:profiles!reporter_id(*), reported:profiles!reported_id(*)')
+      .order('created_at', { ascending: false });
+
+    if (!isAdmin && userId) {
+      query = query.eq('reporter_id', userId);
+    }
+
+    const { data, error } = await query;
+    if (error || !data) {
+      // Fallback query if joins fail
+      const simple = await supabase.from('user_reports').select('*').order('created_at', { ascending: false });
+      return (simple.data as UserReport[]) || [];
+    }
+    return data as UserReport[];
   } catch {
     return [];
   }
@@ -168,6 +229,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [hobbies] = useState<Hobby[]>(INITIAL_HOBBIES);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
+  const [reports, setReports] = useState<UserReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLogingOut, setIsLogingOut] = useState(false);
 
@@ -179,6 +242,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (profile) setCurrentUser(profile);
         const msgs = await fetchUserMessages(supabase, session.user.id);
         setMessages(msgs);
+        const blocks = await fetchBlockedUsers(supabase, session.user.id);
+        setBlockedUsers(blocks);
+        const reps = await fetchReports(supabase, profile?.is_admin || false, session.user.id);
+        setReports(reps);
       }
       const allProfiles = await fetchAllProfiles(supabase);
       setProfiles(allProfiles);
@@ -201,6 +268,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           const msgs = await fetchUserMessages(supabase, session.user.id);
           if (mounted) setMessages(msgs);
+
+          const blocks = await fetchBlockedUsers(supabase, session.user.id);
+          if (mounted) setBlockedUsers(blocks);
+
+          const reps = await fetchReports(supabase, profile?.is_admin || false, session.user.id);
+          if (mounted) setReports(reps);
         }
 
         const allProfiles = await fetchAllProfiles(supabase);
@@ -225,12 +298,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfiles(allProfiles);
         const msgs = await fetchUserMessages(supabase, session.user.id);
         setMessages(msgs);
+        const blocks = await fetchBlockedUsers(supabase, session.user.id);
+        setBlockedUsers(blocks);
+        const reps = await fetchReports(supabase, profile?.is_admin || false, session.user.id);
+        setReports(reps);
       }
 
       if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
         setProfiles([]);
         setMessages([]);
+        setBlockedUsers([]);
+        setReports([]);
       }
 
       if (event === 'TOKEN_REFRESHED' && session?.user) {
@@ -275,10 +354,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       )
       .subscribe();
 
+    // ─── Realtime Blocked Users Subscription ──────────────────────────────────
+    const blockSubscription = supabase
+      .channel('public:blocked_users')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'blocked_users' },
+        async () => {
+          if (currentUser?.id) {
+            const updatedBlocks = await fetchBlockedUsers(supabase, currentUser.id);
+            setBlockedUsers(updatedBlocks);
+          }
+        }
+      )
+      .subscribe();
+
+    // ─── Realtime Reports Subscription ────────────────────────────────────────
+    const reportSubscription = supabase
+      .channel('public:user_reports')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_reports' },
+        async () => {
+          if (currentUser?.id) {
+            const updatedReports = await fetchReports(supabase, currentUser.is_admin, currentUser.id);
+            setReports(updatedReports);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
       messageSubscription.unsubscribe();
+      blockSubscription.unsubscribe();
+      reportSubscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -306,6 +417,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setMessages(msgs);
       const allProfiles = await fetchAllProfiles(supabase);
       setProfiles(allProfiles);
+      const blocks = await fetchBlockedUsers(supabase, data.user.id);
+      setBlockedUsers(blocks);
+      const reps = await fetchReports(supabase, profile?.is_admin || false, data.user.id);
+      setReports(reps);
 
       const isComplete = Boolean(
         profile?.full_name &&
@@ -337,7 +452,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // 2. Perform Supabase signup
-    // Always use the production site URL so the email link works outside localhost
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://findmyvibe.fun';
     const { data, error } = await supabase.auth.signUp({
       email: cleanEmail,
@@ -351,7 +465,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: error.message };
     }
 
-    // 3. Supabase returns empty identities array if user was already registered
     if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
       return { error: 'An account with this email already exists. Please log in instead.' };
     }
@@ -361,9 +474,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     setIsLogingOut(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 800));
     await supabase.auth.signOut();
     setCurrentUser(null);
+    setProfiles([]);
+    setMessages([]);
+    setBlockedUsers([]);
+    setReports([]);
     setIsLogingOut(false);
     router.push('/');
   };
@@ -408,7 +525,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setCurrentUser(updatedUser);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { hobbies: _hobbies, is_demo: _demo, is_admin: _admin, ...safeUpdates } = updates as Record<string, unknown>;
+    const { hobbies: _hobbies, is_demo: _demo, is_admin: _admin, is_banned: _banned, ban_reason: _reason, banned_at: _at, ...safeUpdates } = updates as Record<string, unknown>;
 
     // Upsert into Supabase profiles table
     const { error } = await supabase
@@ -530,11 +647,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendMessage = async (receiverId: string, content: string) => {
     if (!currentUser) return { success: false, error: 'Please log in first.' };
+    if (currentUser.is_banned) return { success: false, error: 'Your account has been restricted.' };
 
     const cleanContent = content.trim();
     if (!cleanContent) return { success: false, error: 'Message cannot be empty.' };
 
-    // Generate valid UUID to match Postgres primary key
+    // Check if user is blocked or has blocked receiver
+    const isBlocked = blockedUsers.some(
+      (b) =>
+        (b.blocker_id === currentUser.id && b.blocked_id === receiverId) ||
+        (b.blocker_id === receiverId && b.blocked_id === currentUser.id)
+    );
+
+    if (isBlocked) {
+      return { success: false, error: 'Messaging is unavailable because of block settings.' };
+    }
+
     const messageId =
       typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
@@ -552,7 +680,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       created_at: new Date().toISOString(),
     };
 
-    // Optimistically update message state without duplicate
     setMessages((prev) => {
       if (prev.some((m) => m.id === messageId)) return prev;
       return [...prev, newMsg];
@@ -627,6 +754,208 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { success: true };
   };
 
+  // ─── Block & Report Actions ────────────────────────────────────────────────
+
+  const blockUser = async (targetUserId: string) => {
+    if (!currentUser) return { success: false, error: 'Please log in first.' };
+    if (currentUser.id === targetUserId) return { success: false, error: 'You cannot block yourself.' };
+
+    const newBlock: BlockedUser = {
+      id: `block_${Date.now()}`,
+      blocker_id: currentUser.id,
+      blocked_id: targetUserId,
+      created_at: new Date().toISOString(),
+    };
+
+    setBlockedUsers((prev) => {
+      if (prev.some((b) => b.blocker_id === currentUser.id && b.blocked_id === targetUserId)) return prev;
+      return [...prev, newBlock];
+    });
+
+    try {
+      const { error } = await supabase.from('blocked_users').insert({
+        blocker_id: currentUser.id,
+        blocked_id: targetUserId,
+      });
+
+      if (error) {
+        console.warn('Block user DB error:', error.message);
+      }
+      return { success: true };
+    } catch (e) {
+      console.error('Block user exception:', e);
+      return { success: true }; // Optimistic success
+    }
+  };
+
+  const unblockUser = async (targetUserId: string) => {
+    if (!currentUser) return { success: false, error: 'Please log in first.' };
+
+    setBlockedUsers((prev) =>
+      prev.filter((b) => !(b.blocker_id === currentUser.id && b.blocked_id === targetUserId))
+    );
+
+    try {
+      const { error } = await supabase
+        .from('blocked_users')
+        .delete()
+        .eq('blocker_id', currentUser.id)
+        .eq('blocked_id', targetUserId);
+
+      if (error) {
+        console.warn('Unblock user DB error:', error.message);
+      }
+      return { success: true };
+    } catch (e) {
+      console.error('Unblock user exception:', e);
+      return { success: true };
+    }
+  };
+
+  const reportUser = async (
+    reportedUserId: string,
+    reason: string,
+    details?: string,
+    alsoBlock: boolean = false
+  ) => {
+    if (!currentUser) return { success: false, error: 'Please log in first.' };
+
+    const newReport: UserReport = {
+      id: `report_${Date.now()}`,
+      reporter_id: currentUser.id,
+      reported_id: reportedUserId,
+      reason,
+      details: details || null,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      reporter: currentUser,
+      reported: profiles.find((p) => p.id === reportedUserId),
+    };
+
+    setReports((prev) => [newReport, ...prev]);
+
+    try {
+      const { error } = await supabase.from('user_reports').insert({
+        reporter_id: currentUser.id,
+        reported_id: reportedUserId,
+        reason,
+        details: details || null,
+        status: 'pending',
+      });
+
+      if (error) {
+        console.warn('Report DB error:', error.message);
+      }
+    } catch (e) {
+      console.error('Report exception:', e);
+    }
+
+    if (alsoBlock) {
+      await blockUser(reportedUserId);
+    }
+
+    return { success: true };
+  };
+
+  // ─── Admin Moderation Actions ──────────────────────────────────────────────
+
+  const banUser = async (userId: string, reason?: string) => {
+    if (!currentUser?.is_admin) return { success: false, error: 'Unauthorized. Admin access required.' };
+
+    const banReason = reason?.trim() || 'Violated CSJMU student network code of conduct.';
+    const bannedAt = new Date().toISOString();
+
+    setProfiles((prev) =>
+      prev.map((p) => (p.id === userId ? { ...p, is_banned: true, ban_reason: banReason, banned_at: bannedAt } : p))
+    );
+
+    if (currentUser.id === userId) {
+      setCurrentUser((prev) =>
+        prev ? { ...prev, is_banned: true, ban_reason: banReason, banned_at: bannedAt } : prev
+      );
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          is_banned: true,
+          ban_reason: banReason,
+          banned_at: bannedAt,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Ban user DB error:', error.message);
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } catch (e) {
+      console.error('Ban user exception:', e);
+      return { success: false, error: 'Failed to ban user.' };
+    }
+  };
+
+  const unbanUser = async (userId: string) => {
+    if (!currentUser?.is_admin) return { success: false, error: 'Unauthorized. Admin access required.' };
+
+    setProfiles((prev) =>
+      prev.map((p) => (p.id === userId ? { ...p, is_banned: false, ban_reason: null, banned_at: null } : p))
+    );
+
+    if (currentUser.id === userId) {
+      setCurrentUser((prev) =>
+        prev ? { ...prev, is_banned: false, ban_reason: null, banned_at: null } : prev
+      );
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          is_banned: false,
+          ban_reason: null,
+          banned_at: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Unban user DB error:', error.message);
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } catch (e) {
+      console.error('Unban user exception:', e);
+      return { success: false, error: 'Failed to unban user.' };
+    }
+  };
+
+  const updateReportStatus = async (reportId: string, status: ReportStatus) => {
+    if (!currentUser?.is_admin) return { success: false, error: 'Unauthorized. Admin access required.' };
+
+    setReports((prev) =>
+      prev.map((r) => (r.id === reportId ? { ...r, status, updated_at: new Date().toISOString() } : r))
+    );
+
+    try {
+      const { error } = await supabase
+        .from('user_reports')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', reportId);
+
+      if (error) {
+        console.error('Update report status DB error:', error.message);
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } catch (e) {
+      console.error('Update report status exception:', e);
+      return { success: false, error: 'Failed to update report status.' };
+    }
+  };
+
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -636,6 +965,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profiles,
         hobbies,
         messages,
+        blockedUsers,
+        reports,
         isLoading,
         isLogingOut,
         login,
@@ -648,6 +979,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sendMessage,
         editMessage,
         deleteMessage,
+        blockUser,
+        unblockUser,
+        reportUser,
+        banUser,
+        unbanUser,
+        updateReportStatus,
         refreshSession,
       }}
     >
@@ -668,3 +1005,4 @@ export function useAuth() {
   if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }
+

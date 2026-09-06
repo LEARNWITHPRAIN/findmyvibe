@@ -73,6 +73,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   avatar_url TEXT,
   bio TEXT,
   is_admin BOOLEAN DEFAULT FALSE,
+  is_banned BOOLEAN DEFAULT FALSE,
+  ban_reason TEXT,
+  banned_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -93,19 +96,46 @@ CREATE TABLE IF NOT EXISTS public.messages (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 5. Create Blocked Users table
+CREATE TABLE IF NOT EXISTS public.blocked_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  blocker_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  blocked_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(blocker_id, blocked_id)
+);
+
+-- 6. Create User Reports table
+CREATE TABLE IF NOT EXISTS public.user_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  reporter_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  reported_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  reason TEXT NOT NULL,
+  details TEXT,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'resolved', 'dismissed')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexing for fast search and real-time chat queries
 CREATE INDEX IF NOT EXISTS idx_messages_conversation ON public.messages(sender_id, receiver_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_profile_hobbies_profile ON public.profile_hobbies(profile_id);
 CREATE INDEX IF NOT EXISTS idx_profile_hobbies_hobby ON public.profile_hobbies(hobby_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_status ON public.profiles(verification_status);
+CREATE INDEX IF NOT EXISTS idx_blocked_users_blocker ON public.blocked_users(blocker_id);
+CREATE INDEX IF NOT EXISTS idx_blocked_users_blocked ON public.blocked_users(blocked_id);
+CREATE INDEX IF NOT EXISTS idx_user_reports_status ON public.user_reports(status);
+CREATE INDEX IF NOT EXISTS idx_user_reports_reported ON public.user_reports(reported_id);
 
--- 5. Row Level Security (RLS) Configuration
+-- 7. Row Level Security (RLS) Configuration
 
 -- Enable RLS on all tables
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.hobbies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profile_hobbies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.blocked_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_reports ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
 CREATE POLICY "Public profiles can be viewed by authenticated users"
@@ -168,6 +198,50 @@ CREATE POLICY "Verified users can send messages"
       WHERE profiles.id = auth.uid() AND profiles.verification_status = 'verified'
     )
   );
+
+-- Blocked Users Policies
+CREATE POLICY "Users can view their own block relationships"
+  ON public.blocked_users FOR SELECT
+  TO authenticated
+  USING (auth.uid() = blocker_id OR auth.uid() = blocked_id);
+
+CREATE POLICY "Users can block other users"
+  ON public.blocked_users FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = blocker_id);
+
+CREATE POLICY "Users can unblock users they blocked"
+  ON public.blocked_users FOR DELETE
+  TO authenticated
+  USING (auth.uid() = blocker_id);
+
+-- User Reports Policies
+CREATE POLICY "Users can submit reports"
+  ON public.user_reports FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = reporter_id);
+
+CREATE POLICY "Users can view their submitted reports or admins can view all reports"
+  ON public.user_reports FOR SELECT
+  TO authenticated
+  USING (
+    auth.uid() = reporter_id
+    OR EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.is_admin = true
+    )
+  );
+
+CREATE POLICY "Admins can update reports"
+  ON public.user_reports FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.is_admin = true
+    )
+  );
+
 
 -- 6. Supabase Storage Bucket for ID Cards
 -- Note: Create a private bucket called 'id-verifications' in the Supabase Dashboard Storage section.

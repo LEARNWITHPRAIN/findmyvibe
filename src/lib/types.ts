@@ -22,10 +22,35 @@ export interface Profile {
   bio?: string | null;
   is_admin: boolean;
   is_demo?: boolean;
+  is_banned?: boolean;
+  ban_reason?: string | null;
+  banned_at?: string | null;
   created_at: string;
   updated_at?: string;
   hobbies?: Hobby[];
   email?: string;
+}
+
+export interface BlockedUser {
+  id: string;
+  blocker_id: string;
+  blocked_id: string;
+  created_at: string;
+}
+
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+
+export interface UserReport {
+  id: string;
+  reporter_id: string;
+  reported_id: string;
+  reason: string;
+  details?: string | null;
+  status: ReportStatus;
+  created_at: string;
+  updated_at?: string;
+  reporter?: Partial<Profile>;
+  reported?: Partial<Profile>;
 }
 
 export interface Message {
@@ -44,3 +69,4 @@ export interface Conversation {
   lastMessage?: Message;
   unreadCount?: number;
 }
+
