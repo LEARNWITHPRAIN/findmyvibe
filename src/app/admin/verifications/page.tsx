@@ -804,21 +804,21 @@ export default function AdminVerificationsPage() {
                         isReportedBanned ? (
                           <button
                             type="button"
-                            onClick={() => handleUnban(reported)}
+                            onClick={() => handleUnban(reported as Profile)}
                             className="px-3.5 py-1.5 rounded-xl bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/30 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                           >
-                            <UserCheck className="w-3.5 h-3.5 text-teal-400" /> Unban {reported.full_name.split(' ')[0]}
+                            <UserCheck className="w-3.5 h-3.5 text-teal-400" /> Unban {(reported.full_name || 'User').split(' ')[0]}
                           </button>
                         ) : (
                           <button
                             type="button"
                             onClick={() => {
-                              setBanningUser(reported);
+                              setBanningUser(reported as Profile);
                               setBanReasonInput(`Reported for: ${report.reason}. ${report.details || ''}`);
                             }}
                             className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                           >
-                            <UserX className="w-3.5 h-3.5" /> Ban {reported.full_name.split(' ')[0]}
+                            <UserX className="w-3.5 h-3.5" /> Ban {(reported.full_name || 'User').split(' ')[0]}
                           </button>
                         )
                       )}
