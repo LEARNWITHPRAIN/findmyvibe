@@ -70,6 +70,8 @@ function MessagesContent() {
   const [alsoBlockOnReport, setAlsoBlockOnReport] = useState(true);
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // Unread tracking: map of partnerId → ISO timestamp of last read
+  const [lastReadMap, setLastReadMap] = useState<Record<string, string>>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -84,6 +86,15 @@ function MessagesContent() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Load lastReadMap from localStorage on mount
+  useEffect(() => {
+    if (!currentUser) return;
+    try {
+      const stored = localStorage.getItem(`fmv_lastread_${currentUser.id}`);
+      if (stored) setLastReadMap(JSON.parse(stored));
+    } catch {/* ignore */}
+  }, [currentUser]);
 
   // Auth guard
   useEffect(() => {
@@ -138,10 +149,22 @@ function MessagesContent() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  // Mark conversation as read when opened
+  const markAsRead = (partnerId: string) => {
+    if (!currentUser) return;
+    const now = new Date().toISOString();
+    const updated = { ...lastReadMap, [partnerId]: now };
+    setLastReadMap(updated);
+    try {
+      localStorage.setItem(`fmv_lastread_${currentUser.id}`, JSON.stringify(updated));
+    } catch {/* ignore */}
+  };
+
   const handleSelectPartner = (id: string) => {
     setActivePartnerId(id);
     setMobileShowChat(true);
     setMenuOpen(false);
+    markAsRead(id);
   };
 
   const handleSend = async (e: React.FormEvent) => {
@@ -218,11 +241,55 @@ function MessagesContent() {
     }
   };
 
-  const activeFilteredProfiles = profiles.filter(
-    (p) =>
-      p.id !== currentUser?.id &&
-      (searchFilter ? (p.full_name || '').toLowerCase().includes(searchFilter.toLowerCase()) : true)
-  );
+  // Mark active conversation as read when switching
+  useEffect(() => {
+    if (activePartnerId) markAsRead(activePartnerId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePartnerId]);
+
+  // Helper: check if a conversation has unread messages
+  const hasUnread = (partnerId: string): boolean => {
+    if (!currentUser) return false;
+    const lastRead = lastReadMap[partnerId];
+    return messages.some(
+      (m) =>
+        m.sender_id === partnerId &&
+        m.receiver_id === currentUser.id &&
+        (!lastRead || m.created_at > lastRead)
+    );
+  };
+
+  // Total unread count across all conversations
+  const totalUnread = profiles
+    .filter((p) => p.id !== currentUser?.id)
+    .filter((p) => hasUnread(p.id)).length;
+
+  const activeFilteredProfiles = profiles
+    .filter(
+      (p) =>
+        p.id !== currentUser?.id &&
+        (searchFilter ? (p.full_name || '').toLowerCase().includes(searchFilter.toLowerCase()) : true)
+    )
+    .sort((a, b) => {
+      // Sort: unread first, then by latest message timestamp
+      const aUnread = hasUnread(a.id) ? 1 : 0;
+      const bUnread = hasUnread(b.id) ? 1 : 0;
+      if (bUnread !== aUnread) return bUnread - aUnread;
+
+      const aLast = [...messages]
+        .reverse()
+        .find((m) => (m.sender_id === a.id && m.receiver_id === currentUser?.id) || (m.sender_id === currentUser?.id && m.receiver_id === a.id));
+      const bLast = [...messages]
+        .reverse()
+        .find((m) => (m.sender_id === b.id && m.receiver_id === currentUser?.id) || (m.sender_id === currentUser?.id && m.receiver_id === b.id));
+
+      if (!aLast && !bLast) return 0;
+      if (!aLast) return 1;
+      if (!bLast) return -1;
+      return new Date(bLast.created_at).getTime() - new Date(aLast.created_at).getTime();
+    });
+
+  void totalUnread; // referenced in Navbar via prop, suppress lint
 
   return (
     <div className="h-[calc(100dvh-4.1rem)] w-full flex flex-col overflow-hidden bg-zinc-950 select-none">
@@ -448,6 +515,7 @@ function MessagesContent() {
                     (b.blocker_id === profile.id && b.blocked_id === currentUser?.id)
                 );
                 const isBanned = profile.is_banned;
+                const unread = hasUnread(profile.id);
 
                 const lastMsg = [...messages]
                   .reverse()
@@ -461,10 +529,12 @@ function MessagesContent() {
                   <button
                     key={profile.id}
                     onClick={() => handleSelectPartner(profile.id)}
-                    className={`w-full p-3.5 text-left flex items-center gap-3 transition-colors cursor-pointer ${
+                    className={`w-full p-3.5 text-left flex items-center gap-3 transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-zinc-900 border-l-4 border-purple-500 text-white'
-                        : 'hover:bg-zinc-900/50 text-zinc-300'
+                        : unread
+                        ? 'bg-purple-950/20 border-l-4 border-purple-600/60 hover:bg-purple-950/30 text-white'
+                        : 'hover:bg-zinc-900/50 text-zinc-300 border-l-4 border-transparent'
                     }`}
                   >
                     <div className="relative w-11 h-11 rounded-2xl overflow-hidden bg-zinc-800 shrink-0 flex items-center justify-center font-bold text-xs">
@@ -473,8 +543,11 @@ function MessagesContent() {
                       ) : (
                         <span>{(profile.full_name || 'U').charAt(0).toUpperCase()}</span>
                       )}
+                      {/* Verified badge — ShieldCheck icon, NOT green online dot */}
                       {profile.verification_status === 'verified' && !isBanned && (
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full ring-2 ring-zinc-950 z-10" />
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-zinc-950 rounded-full flex items-center justify-center z-10">
+                          <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+                        </div>
                       )}
                       {isBanned && (
                         <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-rose-600 rounded-full ring-2 ring-zinc-950 z-10 flex items-center justify-center text-[8px] text-white font-bold" title="Account Suspended">
@@ -485,7 +558,7 @@ function MessagesContent() {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className="font-bold text-xs text-white truncate flex items-center gap-1.5">
+                        <span className={`text-xs truncate flex items-center gap-1.5 ${unread ? 'font-extrabold text-white' : 'font-bold text-zinc-200'}`}>
                           {profile.full_name || 'CSJMU Student'}
                           {isBlocked && (
                             <span className="text-[9px] bg-zinc-800 text-zinc-400 px-1.5 py-0.2 rounded border border-zinc-700">
@@ -498,13 +571,19 @@ function MessagesContent() {
                             </span>
                           )}
                         </span>
-                        {lastMsg && (
-                          <span className="text-[10px] text-zinc-500 shrink-0">
-                            {new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {lastMsg && (
+                            <span className={`text-[10px] shrink-0 ${unread ? 'text-purple-400 font-bold' : 'text-zinc-500'}`}>
+                              {new Date(lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
+                          {/* Instagram-style unread dot */}
+                          {unread && (
+                            <div className="w-2.5 h-2.5 rounded-full bg-purple-500 shrink-0 shadow-lg shadow-purple-500/50" />
+                          )}
+                        </div>
                       </div>
-                      <p className="text-[11px] text-zinc-400 truncate">
+                      <p className={`text-[11px] truncate ${unread ? 'text-zinc-100 font-semibold' : 'text-zinc-400'}`}>
                         {isBanned
                           ? 'Account suspended'
                           : isBlocked
@@ -546,9 +625,6 @@ function MessagesContent() {
                       <Image src={activePartner.avatar_url} alt={activePartner.full_name || 'Student'} fill className="object-cover" unoptimized />
                     ) : (
                       <span>{(activePartner.full_name || 'U').charAt(0).toUpperCase()}</span>
-                    )}
-                    {activePartner.verification_status === 'verified' && !isPartnerBanned && (
-                      <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-zinc-950 z-10" />
                     )}
                   </div>
 

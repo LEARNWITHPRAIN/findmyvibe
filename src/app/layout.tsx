@@ -1,12 +1,21 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/lib/authContext';
 import { Navbar } from '@/components/Navbar';
 import { VerificationBanner } from '@/components/VerificationBanner';
 import { Footer } from '@/components/Footer';
+import { InstallPrompt } from '@/components/InstallPrompt';
+import { NotificationManager } from '@/components/NotificationManager';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+
+export const viewport: Viewport = {
+  themeColor: '#7C3AED',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://findmyvibe.fun'),
@@ -21,6 +30,12 @@ export const metadata: Metadata = {
     'student social platform',
     'find people with similar interests',
   ],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'FindMyVibe',
+  },
   icons: {
     icon: [
       { url: '/favicon.ico' },
@@ -69,6 +84,9 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
+          {/* PWA Install Prompt + Push Notification Manager */}
+          <InstallPrompt />
+          <NotificationManager />
         </AuthProvider>
       </body>
     </html>

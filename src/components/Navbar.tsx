@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -26,12 +26,36 @@ const ADMIN_EMAIL = 'prakharjain2731@gmail.com';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, messages, profiles } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const isActive = (path: string) => pathname === path;
   const isAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+  // Calculate unread count from localStorage lastReadMap
+  useEffect(() => {
+    if (!currentUser || !messages || !profiles) return;
+    try {
+      const stored = localStorage.getItem(`fmv_lastread_${currentUser.id}`);
+      const lastReadMap: Record<string, string> = stored ? JSON.parse(stored) : {};
+
+      const count = profiles
+        .filter((p) => p.id !== currentUser.id)
+        .filter((p) => {
+          const lastRead = lastReadMap[p.id];
+          return messages.some(
+            (m) =>
+              m.sender_id === p.id &&
+              m.receiver_id === currentUser.id &&
+              (!lastRead || m.created_at > lastRead)
+          );
+        }).length;
+
+      setUnreadCount(count);
+    } catch {/* ignore */}
+  }, [messages, currentUser, profiles]);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-xl">
@@ -78,7 +102,7 @@ export default function Navbar() {
               {/* Messages Tab */}
               <Link
                 href="/messages"
-                className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`relative flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   isActive('/messages')
                     ? 'bg-gradient-to-r from-purple-500/25 via-teal-500/25 to-teal-600/20 border border-teal-500/40 text-white shadow-glow-teal/20 scale-[1.02]'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 font-medium'
@@ -87,6 +111,12 @@ export default function Navbar() {
               >
                 <MessageSquare className={`w-4 h-4 transition-transform duration-300 ${isActive('/messages') ? 'text-teal-400 scale-110' : ''}`} />
                 <span className="hidden sm:inline">Messages</span>
+                {/* Unread badge */}
+                {unreadCount > 0 && !isActive('/messages') && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-purple-500 text-white text-[9px] font-black flex items-center justify-center shadow-lg shadow-purple-500/50 animate-pulse">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </Link>
 
               {/* Profile Tab (Instagram style avatar) */}

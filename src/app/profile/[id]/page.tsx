@@ -358,9 +358,17 @@ export default function ProfileDetailPage() {
                   className="object-cover"
                   unoptimized
                 />
-              ) : (
+              ) : isViewerVerified ? (
                 <div className="w-full h-full bg-gradient-to-br from-purple-900/60 to-teal-900/60 flex items-center justify-center text-zinc-200 font-extrabold text-2xl sm:text-3xl">
                   {(profile.full_name || 'U').charAt(0).toUpperCase()}
+                </div>
+              ) : (
+                /* Unverified viewer — blurred lock overlay */
+                <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex flex-col items-center justify-center gap-1.5 text-center p-3">
+                  <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-amber-400" />
+                  <span className="text-[9px] sm:text-[10px] text-zinc-400 leading-tight font-medium">
+                    Verify CSJMU ID<br />to view photo
+                  </span>
                 </div>
               )}
 
