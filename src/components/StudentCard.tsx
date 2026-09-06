@@ -37,17 +37,26 @@ export function StudentCard({ profile }: StudentCardProps) {
                 unoptimized
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-purple-900/40 via-zinc-800 to-teal-900/40 flex items-center justify-center text-zinc-300 font-bold text-base">
-                {(profile.full_name || 'U').charAt(0).toUpperCase()}
-              </div>
+              <>
+                <div className="w-full h-full bg-gradient-to-br from-purple-900/40 via-zinc-800 to-teal-900/40 flex items-center justify-center text-zinc-300 font-bold text-base">
+                  {(profile.full_name || 'U').charAt(0).toUpperCase()}
+                </div>
+                {/* Lock overlay for unverified viewer — subtle */}
+                {!isViewerVerified && (
+                  <div className="absolute inset-0 bg-zinc-900/50 flex items-center justify-center">
+                    <Lock className="w-3.5 h-3.5 text-amber-400/80" />
+                  </div>
+                )}
+              </>
             )}
 
+            {/* Verified badge — ShieldCheck, not a green online dot */}
             {profile.verification_status === 'verified' && (
               <div
-                className="absolute bottom-0.5 right-0.5 bg-emerald-500 text-zinc-950 p-0.5 rounded-full ring-2 ring-zinc-900 z-10"
+                className="absolute -bottom-1 -right-1 bg-zinc-950 rounded-full flex items-center justify-center z-10 w-4 h-4"
                 title="CSJMU Verified Student"
               >
-                <ShieldCheck className="w-2.5 h-2.5 fill-current" />
+                <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
               </div>
             )}
           </div>
@@ -88,10 +97,14 @@ export function StudentCard({ profile }: StudentCardProps) {
                 </span>
               </div>
             ) : (
-              <div className="flex items-center gap-1 text-[10px] text-zinc-500">
-                <Lock className="w-2.5 h-2.5 text-amber-500/80 shrink-0" />
-                <span className="italic">Dept & Year locked</span>
-              </div>
+              <Link
+                href="/verify-id"
+                className="flex items-center gap-1 text-[10px] text-amber-500/80 hover:text-amber-400 transition-colors"
+                title="Verify your CSJMU ID to see full details"
+              >
+                <Lock className="w-2.5 h-2.5 shrink-0" />
+                <span className="italic">Verify ID to see dept &amp; year →</span>
+              </Link>
             )}
           </div>
         </div>

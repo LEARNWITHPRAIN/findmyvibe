@@ -14,6 +14,7 @@ import {
   Users,
   Filter,
   ChevronDown,
+  Camera,
 } from 'lucide-react';
 
 export default function DiscoverPage() {
@@ -108,13 +109,22 @@ export default function DiscoverPage() {
           <span><strong>Verified View:</strong> Full profiles &amp; messaging active</span>
         </div>
       ) : (
-        <Link
-          href="/verify-id"
-          className="w-full px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[11px] flex items-center gap-2 hover:bg-rose-500/20 transition-colors"
-        >
-          <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
-          <span><strong>Restricted View:</strong> Verify ID to unlock full photos &amp; chat</span>
-        </Link>
+        <div className="w-full px-3.5 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+          <div className="flex items-start gap-2">
+            <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-amber-200 text-xs">🔒 Restricted Mode — Profile photos, dept &amp; year are hidden</p>
+              <p className="text-[11px] text-amber-400/80 mt-0.5">Verify your CSJMU Student ID card to unlock full profiles and start chatting.</p>
+            </div>
+          </div>
+          <Link
+            href="/verify-id"
+            className="shrink-0 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-[11px] flex items-center gap-1.5 transition-colors shadow-md"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            Verify ID Now →
+          </Link>
+        </div>
       )}
 
       {/* ── Search + Filters ── */}
