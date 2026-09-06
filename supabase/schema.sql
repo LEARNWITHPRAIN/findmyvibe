@@ -197,6 +197,11 @@ CREATE POLICY "Verified users can send messages"
       SELECT 1 FROM public.profiles
       WHERE profiles.id = auth.uid() AND profiles.verification_status = 'verified'
     )
+    AND NOT EXISTS (
+      SELECT 1 FROM public.blocked_users
+      WHERE blocked_users.blocker_id = messages.receiver_id 
+        AND blocked_users.blocked_id = auth.uid()
+    )
   );
 
 -- Blocked Users Policies
@@ -226,6 +231,7 @@ CREATE POLICY "Users can view their submitted reports or admins can view all rep
   TO authenticated
   USING (
     auth.uid() = reporter_id
+    OR ((auth.jwt() ->> 'email') = 'prakharjain2731@gmail.com')
     OR EXISTS (
       SELECT 1 FROM public.profiles
       WHERE profiles.id = auth.uid() AND profiles.is_admin = true
@@ -236,11 +242,15 @@ CREATE POLICY "Admins can update reports"
   ON public.user_reports FOR UPDATE
   TO authenticated
   USING (
-    EXISTS (
+    ((auth.jwt() ->> 'email') = 'prakharjain2731@gmail.com')
+    OR EXISTS (
       SELECT 1 FROM public.profiles
       WHERE profiles.id = auth.uid() AND profiles.is_admin = true
     )
   );
+
+-- Enable Realtime for all interactive tables
+ALTER PUBLICATION supabase_realtime ADD TABLE public.blocked_users, public.user_reports, public.profiles;
 
 
 -- 6. Supabase Storage Bucket for ID Cards

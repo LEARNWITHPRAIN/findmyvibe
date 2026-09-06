@@ -169,7 +169,7 @@ function MessagesContent() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim() || !activePartnerId || iBlockedPartner || partnerBlockedMe || isPartnerBanned) return;
+    if (!messageText.trim() || !activePartnerId || iBlockedPartner || isPartnerBanned) return;
 
     const text = messageText;
     setMessageText('');
@@ -509,10 +509,8 @@ function MessagesContent() {
             ) : (
               activeFilteredProfiles.map((profile) => {
                 const isSelected = profile.id === activePartnerId;
-                const isBlocked = blockedUsers.some(
-                  (b) =>
-                    (b.blocker_id === currentUser?.id && b.blocked_id === profile.id) ||
-                    (b.blocker_id === profile.id && b.blocked_id === currentUser?.id)
+                const iBlockedThisProfile = blockedUsers.some(
+                  (b) => b.blocker_id === currentUser?.id && b.blocked_id === profile.id
                 );
                 const isBanned = profile.is_banned;
                 const unread = hasUnread(profile.id);
@@ -560,7 +558,7 @@ function MessagesContent() {
                       <div className="flex items-center justify-between mb-0.5">
                         <span className={`text-xs truncate flex items-center gap-1.5 ${unread ? 'font-extrabold text-white' : 'font-bold text-zinc-200'}`}>
                           {profile.full_name || 'CSJMU Student'}
-                          {isBlocked && (
+                          {iBlockedThisProfile && (
                             <span className="text-[9px] bg-zinc-800 text-zinc-400 px-1.5 py-0.2 rounded border border-zinc-700">
                               Blocked
                             </span>
@@ -586,7 +584,7 @@ function MessagesContent() {
                       <p className={`text-[11px] truncate ${unread ? 'text-zinc-100 font-semibold' : 'text-zinc-400'}`}>
                         {isBanned
                           ? 'Account suspended'
-                          : isBlocked
+                          : iBlockedThisProfile
                           ? 'Conversation blocked'
                           : lastMsg
                           ? lastMsg.content
@@ -855,11 +853,6 @@ function MessagesContent() {
                     >
                       <UserCheck className="w-3.5 h-3.5" /> Unblock Student
                     </button>
-                  </div>
-                ) : partnerBlockedMe ? (
-                  <div className="p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center gap-3 text-xs text-zinc-400">
-                    <Lock className="w-4 h-4 text-zinc-500 shrink-0" />
-                    <span>You cannot reply to this conversation.</span>
                   </div>
                 ) : isVerified ? (
                   <form onSubmit={handleSend} className="flex items-center gap-2">

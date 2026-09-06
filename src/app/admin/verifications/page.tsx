@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/lib/authContext';
@@ -20,6 +20,7 @@ import {
   UserX,
   UserCheck,
   ArrowRight,
+  RefreshCw,
 } from 'lucide-react';
 
 const ADMIN_EMAIL = 'prakharjain2731@gmail.com';
@@ -35,6 +36,7 @@ export default function AdminVerificationsPage() {
     unbanUser,
     updateReportStatus,
     currentUser,
+    refreshSession,
   } = useAuth();
 
   const [activeTab, setActiveTab] = useState<AdminTab>('verifications');
@@ -44,11 +46,24 @@ export default function AdminVerificationsPage() {
   const [userFilter, setUserFilter] = useState<'all' | 'banned' | 'active'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Ban Modal State
   const [banningUser, setBanningUser] = useState<Profile | null>(null);
   const [banReasonInput, setBanReasonInput] = useState('Violation of student network community guidelines.');
   const [isProcessingBan, setIsProcessingBan] = useState(false);
+
+  // Auto-refresh data when switching tabs
+  useEffect(() => {
+    refreshSession();
+  }, [activeTab]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshSession();
+    setIsRefreshing(false);
+    showToast('Admin data refreshed from server.');
+  };
 
   // === ADMIN ACCESS GATE ===
   const isAdmin = currentUser?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
@@ -134,17 +149,33 @@ export default function AdminVerificationsPage() {
     return true;
   });
 
-  const filteredReportsList = reports.filter((r) => {
-    if (reportFilter !== 'all' && r.status !== reportFilter) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const repName = (r.reporter?.full_name || '').toLowerCase();
-      const targetName = (r.reported?.full_name || '').toLowerCase();
-      const reason = (r.reason || '').toLowerCase();
-      return repName.includes(q) || targetName.includes(q) || reason.includes(q);
-    }
-    return true;
-  });
+  const filteredReportsList = reports
+    .map((r) => ({
+      ...r,
+      reporter: r.reporter || profiles.find((p) => p.id === r.reporter_id),
+      reported: r.reported || profiles.find((p) => p.id === r.reported_id),
+    }))
+    .filter((r) => {
+      if (reportFilter !== 'all' && r.status !== reportFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const repName = (r.reporter?.full_name || '').toLowerCase();
+        const repEmail = (r.reporter?.email || '').toLowerCase();
+        const targetName = (r.reported?.full_name || '').toLowerCase();
+        const targetEmail = (r.reported?.email || '').toLowerCase();
+        const reason = (r.reason || '').toLowerCase();
+        const details = (r.details || '').toLowerCase();
+        return (
+          repName.includes(q) ||
+          repEmail.includes(q) ||
+          targetName.includes(q) ||
+          targetEmail.includes(q) ||
+          reason.includes(q) ||
+          details.includes(q)
+        );
+      }
+      return true;
+    });
 
   const filteredUsersList = profiles.filter((p) => {
     if (userFilter === 'banned' && !p.is_banned) return false;
@@ -345,6 +376,16 @@ export default function AdminVerificationsPage() {
             Review student ID cards, inspect &ldquo;who reported whom&rdquo; moderation logs, and manage user bans.
           </p>
         </div>
+
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="self-start sm:self-auto px-4 py-2.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-bold border border-zinc-800 flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 shrink-0 shadow-md"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 text-purple-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span>{isRefreshing ? 'Refreshing…' : 'Refresh Data'}</span>
+        </button>
       </div>
 
       {/* Stats Cards */}
@@ -790,13 +831,26 @@ export default function AdminVerificationsPage() {
                       </div>
                     </div>
 
-                    {/* Details / Notes */}
-                    {report.details && (
-                      <div className="bg-zinc-950/50 rounded-2xl p-3 border border-zinc-800/80 text-xs text-zinc-300">
-                        <span className="font-bold text-zinc-400 block mb-1">Reporter&apos;s Statement:</span>
-                        <p className="italic text-zinc-300">&ldquo;{report.details}&rdquo;</p>
+                    {/* Report Reason & Evidence Statement Box */}
+                    <div className="bg-zinc-950/70 rounded-2xl p-3.5 sm:p-4 border border-zinc-800/80 space-y-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Report Reason:</span>
+                        <span className="px-2.5 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 font-extrabold text-xs border border-rose-500/40">
+                          {report.reason || 'Misconduct / Community Violation'}
+                        </span>
                       </div>
-                    )}
+
+                      {report.details ? (
+                        <div className="text-xs text-zinc-300 pt-2 border-t border-zinc-800/70">
+                          <span className="font-semibold text-zinc-400 block mb-1">Reporter&apos;s Statement &amp; Context:</span>
+                          <p className="italic text-zinc-200 bg-zinc-900/90 p-3 rounded-xl border border-zinc-800 leading-relaxed">
+                            &ldquo;{report.details}&rdquo;
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-zinc-500 italic pt-0.5">No additional statement submitted with this report.</p>
+                      )}
+                    </div>
 
                     {/* Admin Actions Bar */}
                     <div className="flex flex-wrap items-center justify-end gap-2 pt-1 border-t border-zinc-800/60">

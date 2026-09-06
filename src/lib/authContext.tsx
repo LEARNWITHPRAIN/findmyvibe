@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Profile, Hobby, Message, VerificationStatus, BlockedUser, UserReport, ReportStatus } from './types';
 import { INITIAL_HOBBIES } from './mockData';
 import { createClient } from './supabase/client';
+import { ShieldAlert, LogOut } from 'lucide-react';
 
 const ADMIN_EMAIL = 'prakharjain2731@gmail.com';
 
@@ -90,6 +91,11 @@ async function fetchProfile(
     const email = (data.email ?? fallbackEmail ?? '').toLowerCase();
     const isAdmin = email === ADMIN_EMAIL.toLowerCase();
     const fullName = data.full_name?.trim() || (email ? email.split('@')[0] : 'CSJMU Student');
+
+    // Ensure is_admin flag in DB is synced for administrator
+    if (isAdmin && !data.is_admin) {
+      await supabase.from('profiles').update({ is_admin: true }).eq('id', userId);
+    }
 
     return {
       ...data,
@@ -201,7 +207,7 @@ async function fetchReports(
   try {
     let query = supabase
       .from('user_reports')
-      .select('*, reporter:profiles!reporter_id(*), reported:profiles!reported_id(*)')
+      .select('*, reporter:profiles!user_reports_reporter_id_fkey(*), reported:profiles!user_reports_reported_id_fkey(*)')
       .order('created_at', { ascending: false });
 
     if (!isAdmin && userId) {
@@ -211,7 +217,14 @@ async function fetchReports(
     const { data, error } = await query;
     if (error || !data) {
       // Fallback query if joins fail
-      const simple = await supabase.from('user_reports').select('*').order('created_at', { ascending: false });
+      let fallbackQuery = supabase
+        .from('user_reports')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!isAdmin && userId) {
+        fallbackQuery = fallbackQuery.eq('reporter_id', userId);
+      }
+      const simple = await fallbackQuery;
       return (simple.data as UserReport[]) || [];
     }
     return data as UserReport[];
@@ -361,8 +374,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'blocked_users' },
         async () => {
-          if (currentUser?.id) {
-            const updatedBlocks = await fetchBlockedUsers(supabase, currentUser.id);
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.id) {
+            const updatedBlocks = await fetchBlockedUsers(supabase, session.user.id);
             setBlockedUsers(updatedBlocks);
           }
         }
@@ -376,10 +390,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'user_reports' },
         async () => {
-          if (currentUser?.id) {
-            const updatedReports = await fetchReports(supabase, currentUser.is_admin, currentUser.id);
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            const isAdmin = session.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+            const updatedReports = await fetchReports(supabase, isAdmin, session.user.id);
             setReports(updatedReports);
           }
+        }
+      )
+      .subscribe();
+
+    // ─── Realtime Profile & Ban Subscription ──────────────────────────────────
+    const profileSubscription = supabase
+      .channel('public:profiles_moderation')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles' },
+        (payload) => {
+          const updated = payload.new as Record<string, unknown>;
+          setCurrentUser((prev) => {
+            if (prev && prev.id === updated.id) {
+              return {
+                ...prev,
+                ...updated,
+                is_banned: Boolean(updated.is_banned),
+                ban_reason: (updated.ban_reason as string) || null,
+                banned_at: (updated.banned_at as string) || null,
+                verification_status: (updated.verification_status as VerificationStatus) || prev.verification_status,
+              };
+            }
+            return prev;
+          });
+          setProfiles((prev) =>
+            prev.map((p) =>
+              p.id === updated.id
+                ? {
+                    ...p,
+                    ...updated,
+                    is_banned: Boolean(updated.is_banned),
+                    ban_reason: (updated.ban_reason as string) || null,
+                    banned_at: (updated.banned_at as string) || null,
+                    verification_status: (updated.verification_status as VerificationStatus) || p.verification_status,
+                  }
+                : p
+            )
+          );
         }
       )
       .subscribe();
@@ -390,6 +445,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       messageSubscription.unsubscribe();
       blockSubscription.unsubscribe();
       reportSubscription.unsubscribe();
+      profileSubscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -652,15 +708,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const cleanContent = content.trim();
     if (!cleanContent) return { success: false, error: 'Message cannot be empty.' };
 
-    // Check if user is blocked or has blocked receiver
-    const isBlocked = blockedUsers.some(
-      (b) =>
-        (b.blocker_id === currentUser.id && b.blocked_id === receiverId) ||
-        (b.blocker_id === receiverId && b.blocked_id === currentUser.id)
+    // 1. Check if current user has blocked the receiver
+    const iBlockedReceiver = blockedUsers.some(
+      (b) => b.blocker_id === currentUser.id && b.blocked_id === receiverId
+    );
+    if (iBlockedReceiver) {
+      return { success: false, error: 'You have blocked this student. Unblock them first to send messages.' };
+    }
+
+    // 2. Check if receiver has blocked current user
+    let partnerBlockedMe = blockedUsers.some(
+      (b) => b.blocker_id === receiverId && b.blocked_id === currentUser.id
     );
 
-    if (isBlocked) {
-      return { success: false, error: 'Messaging is unavailable because of block settings.' };
+    if (!partnerBlockedMe) {
+      // Direct DB verification check in case realtime sync hasn't arrived
+      try {
+        const { data: dbBlock } = await supabase
+          .from('blocked_users')
+          .select('id')
+          .eq('blocker_id', receiverId)
+          .eq('blocked_id', currentUser.id)
+          .maybeSingle();
+        if (dbBlock) {
+          partnerBlockedMe = true;
+        }
+      } catch {
+        // ignore check errors
+      }
     }
 
     const messageId =
@@ -680,10 +755,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       created_at: new Date().toISOString(),
     };
 
+    // Add locally to sender's chat UI so message appears sent to sender
     setMessages((prev) => {
       if (prev.some((m) => m.id === messageId)) return prev;
       return [...prev, newMsg];
     });
+
+    // 3. SILENT DROP: If receiver blocked sender, the sender MUST NOT know they are blocked.
+    // The message is NOT inserted into DB and receiver NEVER receives it.
+    if (partnerBlockedMe) {
+      return { success: true };
+    }
 
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(receiverId);
 
@@ -820,8 +902,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ) => {
     if (!currentUser) return { success: false, error: 'Please log in first.' };
 
+    const reportId =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = (Math.random() * 16) | 0;
+            const v = c === 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+          });
+
     const newReport: UserReport = {
-      id: `report_${Date.now()}`,
+      id: reportId,
       reporter_id: currentUser.id,
       reported_id: reportedUserId,
       reason,
@@ -836,6 +927,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const { error } = await supabase.from('user_reports').insert({
+        id: reportId,
         reporter_id: currentUser.id,
         reported_id: reportedUserId,
         reason,
@@ -990,12 +1082,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     >
       {/* Logout Loading Overlay */}
       {isLogingOut && (
-        <div className="fixed inset-0 z-[9999] bg-zinc-950/95 backdrop-blur-md flex flex-col items-center justify-center gap-4">
+        <div className="fixed inset-0 z-[99999] bg-zinc-950/95 backdrop-blur-md flex flex-col items-center justify-center gap-4">
           <div className="w-14 h-14 rounded-2xl border-2 border-purple-500/50 border-t-purple-400 animate-spin" />
           <p className="text-zinc-300 text-sm font-semibold tracking-wide animate-pulse">Signing you out…</p>
         </div>
       )}
-      {children}
+
+      {/* Banned User Full-Site Block Screen */}
+      {currentUser?.is_banned ? (
+        <div className="fixed inset-0 z-[99999] bg-zinc-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-950/40 via-zinc-950 to-zinc-950 flex flex-col items-center justify-center p-6 text-center select-none overflow-y-auto">
+          <div className="relative mb-6">
+            <div className="w-24 h-24 rounded-3xl bg-rose-500/10 border-2 border-rose-500/30 flex items-center justify-center text-rose-500 shadow-2xl shadow-rose-950/60 animate-pulse">
+              <ShieldAlert className="w-12 h-12" />
+            </div>
+            <div className="absolute -top-1.5 -right-1.5 w-8 h-8 bg-rose-600 rounded-full flex items-center justify-center text-white text-sm font-black shadow-lg">
+              ✕
+            </div>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2">
+            Access Denied — Account Blocked
+          </h1>
+          <p className="text-zinc-400 text-xs sm:text-sm max-w-md mx-auto leading-relaxed mb-6">
+            You cannot access FindMyVibe. Your student account has been restricted by campus administrators for violating our community safety guidelines.
+          </p>
+
+          <div className="w-full max-w-md bg-zinc-900/90 border border-rose-900/40 rounded-3xl p-5 mb-6 text-left space-y-3.5 shadow-2xl backdrop-blur-sm">
+            <div className="flex items-center justify-between text-xs border-b border-zinc-800/80 pb-2.5">
+              <span className="text-zinc-500 uppercase font-bold tracking-wider text-[10px]">Suspension Status</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-bold text-[11px] border border-rose-500/40">
+                Active Suspension
+              </span>
+            </div>
+            <div>
+              <span className="text-zinc-400 text-xs font-semibold block mb-1">Reason for Suspension:</span>
+              <p className="text-rose-200 text-xs font-medium bg-rose-950/40 p-3 rounded-2xl border border-rose-900/30 leading-relaxed">
+                {currentUser.ban_reason || 'Violation of student community standards and network policies.'}
+              </p>
+            </div>
+            {currentUser.banned_at && (
+              <div className="text-[11px] text-zinc-500 flex items-center justify-between pt-1">
+                <span>Suspension Date:</span>
+                <span className="text-zinc-300 font-medium">
+                  {new Date(currentUser.banned_at).toLocaleDateString([], {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <p className="text-xs text-zinc-500 max-w-sm mb-6">
+            If you believe this suspension is in error or wish to appeal, please contact the campus proctor office or administrator at {ADMIN_EMAIL}.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => logout()}
+            className="px-7 py-3 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-bold text-xs shadow-lg shadow-rose-950/60 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out of Account</span>
+          </button>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }
