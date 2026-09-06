@@ -191,28 +191,29 @@ export default function AdminVerificationsPage() {
   });
 
   return (
-    <div className="min-h-screen py-6 sm:py-10 px-3.5 sm:px-6 max-w-6xl mx-auto space-y-6 sm:space-y-8">
+    /* pb-28 leaves room for the fixed bottom nav bar on mobile */
+    <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 pt-4 sm:pt-8 pb-28 sm:pb-12 space-y-5 sm:space-y-8 overflow-x-hidden">
       {/* Toast Alert */}
       {actionSuccessMessage && (
-        <div className="fixed top-20 right-4 sm:right-6 z-50 bg-purple-600 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2 animate-in slide-in-from-top-4">
-          <Sparkles className="w-4 h-4" />
-          <span>{actionSuccessMessage}</span>
+        <div className="fixed top-20 left-4 right-4 sm:left-auto sm:right-6 z-50 bg-purple-600 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl flex items-center justify-center sm:justify-start gap-2 animate-in slide-in-from-top-4">
+          <Sparkles className="w-4 h-4 shrink-0" />
+          <span className="truncate">{actionSuccessMessage}</span>
         </div>
       )}
 
       {/* Ban Reason Prompt Modal */}
       {banningUser && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl sm:rounded-3xl max-w-md w-full p-4 sm:p-6 space-y-4 shadow-2xl animate-in zoom-in-95 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
-                <UserX className="w-6 h-6" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+                <UserX className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <h3 className="font-extrabold text-white text-base">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-extrabold text-white text-sm sm:text-base truncate">
                   Ban Student: {banningUser.full_name}
                 </h3>
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-zinc-400 truncate">
                   {banningUser.department} • {banningUser.email}
                 </p>
               </div>
@@ -235,11 +236,11 @@ export default function AdminVerificationsPage() {
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setBanningUser(null)}
-                className="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-semibold border border-zinc-800"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-semibold border border-zinc-800 text-center cursor-pointer"
               >
                 Cancel
               </button>
@@ -247,7 +248,7 @@ export default function AdminVerificationsPage() {
                 type="button"
                 disabled={isProcessingBan || !banReasonInput.trim()}
                 onClick={handleConfirmBan}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {isProcessingBan ? 'Banning…' : 'Confirm Ban & Suspend'}
               </button>
@@ -259,17 +260,17 @@ export default function AdminVerificationsPage() {
       {/* ID Detail Inspection Modal */}
       {selectedProfileForReview && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl sm:rounded-3xl max-w-2xl w-full p-4 sm:p-6 space-y-5 sm:space-y-6 shadow-2xl relative max-h-[92dvh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl sm:rounded-3xl max-w-2xl w-full p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-2xl relative max-h-[92dvh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3 sm:pb-4">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold shrink-0">
                   🪪
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-bold text-white text-sm sm:text-base truncate">
+                  <h3 className="font-bold text-white text-xs sm:text-base truncate">
                     CSJMU ID Inspection: {selectedProfileForReview.full_name}
                   </h3>
-                  <p className="text-xs text-zinc-400 truncate">
+                  <p className="text-[11px] sm:text-xs text-zinc-400 truncate">
                     {selectedProfileForReview.department} • Year {selectedProfileForReview.year}
                   </p>
                 </div>
@@ -277,14 +278,14 @@ export default function AdminVerificationsPage() {
 
               <button
                 onClick={() => setSelectedProfileForReview(null)}
-                className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800 shrink-0"
+                className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800 shrink-0 cursor-pointer ml-2"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* ID Card Display */}
-            <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+            <div className="relative w-full h-56 sm:h-80 rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 flex items-center justify-center">
               {selectedProfileForReview.id_card_url ? (
                 selectedProfileForReview.id_card_url.startsWith('data:') ? (
                   <img
@@ -312,33 +313,33 @@ export default function AdminVerificationsPage() {
             </div>
 
             {/* Info details */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 bg-zinc-900/60 p-3 sm:p-3.5 rounded-2xl text-xs">
-              <div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 bg-zinc-900/60 p-3 sm:p-3.5 rounded-2xl text-xs">
+              <div className="min-w-0">
                 <span className="text-zinc-500 block text-[10px]">Student Email</span>
-                <span className="font-semibold text-zinc-200 truncate block">
-                  {selectedProfileForReview.email || 'student@csjMU.ac.in'}
+                <span className="font-semibold text-zinc-200 truncate block text-[11px] sm:text-xs">
+                  {selectedProfileForReview.email || 'student@csjmu.ac.in'}
                 </span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="text-zinc-500 block text-[10px]">College</span>
-                <span className="font-semibold text-teal-400">CSJMU Kanpur</span>
+                <span className="font-semibold text-teal-400 text-[11px] sm:text-xs">CSJMU Kanpur</span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="text-zinc-500 block text-[10px]">Year / Dept</span>
-                <span className="font-semibold text-zinc-200">
+                <span className="font-semibold text-zinc-200 truncate block text-[11px] sm:text-xs">
                   Year {selectedProfileForReview.year || '1'}
                 </span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="text-zinc-500 block text-[10px]">Current Status</span>
-                <span className="font-semibold capitalize text-purple-400">
+                <span className="font-semibold capitalize text-purple-400 text-[11px] sm:text-xs">
                   {selectedProfileForReview.verification_status}
                 </span>
               </div>
             </div>
 
             {/* Modal Actions */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5 sm:gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-1">
               <button
                 type="button"
                 onClick={() =>
@@ -356,7 +357,7 @@ export default function AdminVerificationsPage() {
                 }
                 className="w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all cursor-pointer"
               >
-                <Check className="w-4 h-4" /> Approve & Verify
+                <Check className="w-4 h-4" /> Approve &amp; Verify
               </button>
             </div>
           </div>
@@ -364,83 +365,101 @@ export default function AdminVerificationsPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-zinc-800/80 pb-5 sm:pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-zinc-800/80 pb-4 sm:pb-6">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold mb-2">
-            <Layers className="w-3.5 h-3.5" /> Proctor Portal
+          <div className="flex items-center justify-between sm:justify-start gap-2 mb-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-[11px] font-semibold">
+              <Layers className="w-3 h-3" /> Proctor Portal
+            </div>
+
+            {/* Refresh Button Mobile */}
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="sm:hidden px-2.5 py-1 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-[11px] font-semibold border border-zinc-800 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 shrink-0"
+            >
+              <RefreshCw className={`w-3 h-3 text-purple-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span>{isRefreshing ? '…' : 'Refresh'}</span>
+            </button>
           </div>
-          <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight">
+
+          <h1 className="text-lg sm:text-3xl font-black text-white tracking-tight leading-tight">
             CSJMU Safety &amp; Administration Dashboard
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+          <p className="text-[11px] sm:text-sm text-zinc-400 mt-1 leading-snug">
             Review student ID cards, inspect &ldquo;who reported whom&rdquo; moderation logs, and manage user bans.
           </p>
         </div>
 
+        {/* Refresh Button Desktop */}
         <button
           type="button"
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="self-start sm:self-auto px-4 py-2.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-bold border border-zinc-800 flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50 shrink-0 shadow-md"
+          className="hidden sm:flex self-auto px-4 py-2.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-bold border border-zinc-800 items-center gap-2 transition-all cursor-pointer disabled:opacity-50 shrink-0 shadow-md"
         >
           <RefreshCw className={`w-3.5 h-3.5 text-purple-400 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span>{isRefreshing ? 'Refreshing…' : 'Refresh Data'}</span>
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 sm:gap-4">
-        <div className="bg-zinc-900/60 border border-amber-500/30 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-zinc-400">Pending IDs</span>
-            <div className="text-xl sm:text-2xl font-black text-amber-400 mt-1">{pendingCount}</div>
+      {/* Stats Cards - Fully mobile responsive */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+        <div className="bg-zinc-900/60 border border-amber-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-5 flex items-center justify-between min-w-0">
+          <div className="min-w-0">
+            <span className="text-[11px] sm:text-xs font-semibold text-zinc-400 truncate block">Pending IDs</span>
+            <div className="text-lg sm:text-2xl font-black text-amber-400 mt-0.5 sm:mt-1">{pendingCount}</div>
           </div>
-          <Clock className="w-7 h-7 sm:w-8 sm:h-8 text-amber-400/40" />
+          <Clock className="w-5 h-5 sm:w-8 sm:h-8 text-amber-400/40 shrink-0 ml-1" />
         </div>
 
-        <div className="bg-zinc-900/60 border border-rose-500/30 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-zinc-400">User Reports</span>
-            <div className="text-xl sm:text-2xl font-black text-rose-400 mt-1">{pendingReportsCount}</div>
+        <div className="bg-zinc-900/60 border border-rose-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-5 flex items-center justify-between min-w-0">
+          <div className="min-w-0">
+            <span className="text-[11px] sm:text-xs font-semibold text-zinc-400 truncate block">User Reports</span>
+            <div className="text-lg sm:text-2xl font-black text-rose-400 mt-0.5 sm:mt-1">{pendingReportsCount}</div>
           </div>
-          <Flag className="w-7 h-7 sm:w-8 sm:h-8 text-rose-400/40" />
+          <Flag className="w-5 h-5 sm:w-8 sm:h-8 text-rose-400/40 shrink-0 ml-1" />
         </div>
 
-        <div className="bg-zinc-900/60 border border-purple-500/30 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-zinc-400">Banned Accounts</span>
-            <div className="text-xl sm:text-2xl font-black text-purple-400 mt-1">{bannedCount}</div>
+        <div className="bg-zinc-900/60 border border-purple-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-5 flex items-center justify-between min-w-0">
+          <div className="min-w-0">
+            <span className="text-[11px] sm:text-xs font-semibold text-zinc-400 truncate block">Banned Users</span>
+            <div className="text-lg sm:text-2xl font-black text-purple-400 mt-0.5 sm:mt-1">{bannedCount}</div>
           </div>
-          <UserX className="w-7 h-7 sm:w-8 sm:h-8 text-purple-400/40" />
+          <UserX className="w-5 h-5 sm:w-8 sm:h-8 text-purple-400/40 shrink-0 ml-1" />
         </div>
 
-        <div className="bg-zinc-900/60 border border-teal-500/30 rounded-2xl p-4 sm:p-5 flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-zinc-400">Verified Students</span>
-            <div className="text-xl sm:text-2xl font-black text-teal-400 mt-1">{verifiedCount}</div>
+        <div className="bg-zinc-900/60 border border-teal-500/30 rounded-xl sm:rounded-2xl p-3 sm:p-5 flex items-center justify-between min-w-0">
+          <div className="min-w-0">
+            <span className="text-[11px] sm:text-xs font-semibold text-zinc-400 truncate block">Verified Users</span>
+            <div className="text-lg sm:text-2xl font-black text-teal-400 mt-0.5 sm:mt-1">{verifiedCount}</div>
           </div>
-          <ShieldCheck className="w-7 h-7 sm:w-8 sm:h-8 text-teal-400/40" />
+          <ShieldCheck className="w-5 h-5 sm:w-8 sm:h-8 text-teal-400/40 shrink-0 ml-1" />
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex border-b border-zinc-800 gap-2 sm:gap-4 overflow-x-auto">
+      {/* Navigation Tabs - Locked Segmented Control on Mobile, No Horizontal Overflow */}
+      <div className="grid grid-cols-3 gap-1 p-1 bg-zinc-900/80 border border-zinc-800 rounded-2xl sm:rounded-none sm:bg-transparent sm:border-0 sm:border-b sm:border-zinc-800 sm:flex sm:gap-6 sm:p-0">
         <button
           type="button"
           onClick={() => {
             setActiveTab('verifications');
             setSearchQuery('');
           }}
-          className={`pb-3 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 transition-all shrink-0 cursor-pointer ${
+          className={`flex items-center justify-center gap-1 sm:gap-2 py-2 sm:pb-3 rounded-xl sm:rounded-none text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'verifications'
-              ? 'border-purple-500 text-purple-400'
-              : 'border-transparent text-zinc-400 hover:text-white'
+              ? 'bg-purple-600/20 text-purple-300 border border-purple-500/40 sm:border-0 sm:border-b-2 sm:border-purple-500 sm:bg-transparent sm:text-purple-400'
+              : 'text-zinc-400 hover:text-white border-transparent'
           }`}
         >
-          <ShieldCheck className="w-4 h-4" />
-          <span>ID Verifications</span>
+          <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span className="truncate">
+            <span className="sm:hidden">IDs</span>
+            <span className="hidden sm:inline">ID Verifications</span>
+          </span>
           {pendingCount > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-amber-500 text-zinc-950 font-black text-[10px]">
+            <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-zinc-950 font-black text-[10px] shrink-0">
               {pendingCount}
             </span>
           )}
@@ -452,16 +471,19 @@ export default function AdminVerificationsPage() {
             setActiveTab('reports');
             setSearchQuery('');
           }}
-          className={`pb-3 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 transition-all shrink-0 cursor-pointer ${
+          className={`flex items-center justify-center gap-1 sm:gap-2 py-2 sm:pb-3 rounded-xl sm:rounded-none text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'reports'
-              ? 'border-rose-500 text-rose-400'
-              : 'border-transparent text-zinc-400 hover:text-white'
+              ? 'bg-rose-600/20 text-rose-300 border border-rose-500/40 sm:border-0 sm:border-b-2 sm:border-rose-500 sm:bg-transparent sm:text-rose-400'
+              : 'text-zinc-400 hover:text-white border-transparent'
           }`}
         >
-          <Flag className="w-4 h-4" />
-          <span>User Reports &amp; Safety</span>
+          <Flag className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span className="truncate">
+            <span className="sm:hidden">Reports</span>
+            <span className="hidden sm:inline">User Reports &amp; Safety</span>
+          </span>
           {pendingReportsCount > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[10px]">
+            <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-black text-[10px] shrink-0">
               {pendingReportsCount}
             </span>
           )}
@@ -473,17 +495,20 @@ export default function AdminVerificationsPage() {
             setActiveTab('users');
             setSearchQuery('');
           }}
-          className={`pb-3 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 transition-all shrink-0 cursor-pointer ${
+          className={`flex items-center justify-center gap-1 sm:gap-2 py-2 sm:pb-3 rounded-xl sm:rounded-none text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'users'
-              ? 'border-teal-500 text-teal-400'
-              : 'border-transparent text-zinc-400 hover:text-white'
+              ? 'bg-teal-600/20 text-teal-300 border border-teal-500/40 sm:border-0 sm:border-b-2 sm:border-teal-500 sm:bg-transparent sm:text-teal-400'
+              : 'text-zinc-400 hover:text-white border-transparent'
           }`}
         >
-          <UserX className="w-4 h-4" />
-          <span>Student Ban Management</span>
+          <UserX className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span className="truncate">
+            <span className="sm:hidden">Bans</span>
+            <span className="hidden sm:inline">Student Ban Management</span>
+          </span>
           {bannedCount > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-300 font-black text-[10px]">
-              {bannedCount} Banned
+            <span className="px-1.5 py-0.2 rounded-full bg-purple-500/30 text-purple-300 font-black text-[10px] shrink-0">
+              {bannedCount}
             </span>
           )}
         </button>
@@ -492,12 +517,13 @@ export default function AdminVerificationsPage() {
       {/* TAB 1: ID VERIFICATIONS */}
       {activeTab === 'verifications' && (
         <div className="space-y-4">
-          {/* Filter & Search */}
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
+          {/* Filter & Search - Responsive Grid on Mobile */}
+          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+            <div className="grid grid-cols-4 gap-1.5 w-full sm:w-auto sm:flex sm:items-center">
               <button
+                type="button"
                 onClick={() => setFilterStatus('all')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer ${
                   filterStatus === 'all'
                     ? 'bg-purple-600 text-white shadow-glow-purple'
                     : 'bg-zinc-800 text-zinc-400 hover:text-white'
@@ -506,8 +532,9 @@ export default function AdminVerificationsPage() {
                 All ({profiles.length})
               </button>
               <button
+                type="button"
                 onClick={() => setFilterStatus('pending')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer ${
                   filterStatus === 'pending'
                     ? 'bg-amber-500 text-zinc-950 font-bold'
                     : 'bg-zinc-800 text-zinc-400 hover:text-white'
@@ -516,8 +543,9 @@ export default function AdminVerificationsPage() {
                 Pending ({pendingCount})
               </button>
               <button
+                type="button"
                 onClick={() => setFilterStatus('verified')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer ${
                   filterStatus === 'verified'
                     ? 'bg-teal-500 text-zinc-950 font-bold'
                     : 'bg-zinc-800 text-zinc-400 hover:text-white'
@@ -526,8 +554,9 @@ export default function AdminVerificationsPage() {
                 Verified ({verifiedCount})
               </button>
               <button
+                type="button"
                 onClick={() => setFilterStatus('rejected')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer ${
                   filterStatus === 'rejected'
                     ? 'bg-rose-500 text-white font-bold'
                     : 'bg-zinc-800 text-zinc-400 hover:text-white'
@@ -549,20 +578,21 @@ export default function AdminVerificationsPage() {
             </div>
           </div>
 
-          {/* Submissions List */}
-          <div className="bg-zinc-900/70 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl divide-y divide-zinc-800/80">
+          {/* Submissions List - Card layout fixed for Mobile, no horizontal swipe */}
+          <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl divide-y divide-zinc-800/80">
             {filteredVerificationList.length === 0 ? (
-              <div className="p-12 text-center text-zinc-500 text-xs">
+              <div className="p-10 text-center text-zinc-500 text-xs">
                 No ID submissions found matching this filter.
               </div>
             ) : (
               filteredVerificationList.map((profile) => (
                 <div
                   key={profile.id}
-                  className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-zinc-800/40 transition-colors"
+                  className="p-3.5 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 hover:bg-zinc-800/30 transition-colors w-full"
                 >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700/80 shrink-0 overflow-hidden flex items-center justify-center font-bold text-xs relative">
+                  {/* Student Details */}
+                  <div className="flex items-start sm:items-center gap-3 w-full sm:w-auto min-w-0 flex-1">
+                    <div className="w-11 h-11 rounded-2xl bg-zinc-800 border border-zinc-700/80 shrink-0 overflow-hidden flex items-center justify-center font-bold text-xs relative">
                       {profile.avatar_url ? (
                         <Image src={profile.avatar_url} alt={profile.full_name || 'Student'} fill className="object-cover" unoptimized />
                       ) : (
@@ -570,70 +600,74 @@ export default function AdminVerificationsPage() {
                       )}
                     </div>
 
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-white text-sm truncate">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="font-bold text-white text-xs sm:text-sm truncate max-w-[180px] sm:max-w-none">
                           {profile.full_name || 'CSJMU Student'}
                         </h3>
                         {profile.verification_status === 'verified' && (
-                          <span className="bg-teal-500/20 text-teal-400 border border-teal-500/40 text-[10px] font-bold px-2 py-0.2 rounded-full">
+                          <span className="bg-teal-500/20 text-teal-400 border border-teal-500/40 text-[9px] font-bold px-1.5 py-0.2 rounded-full shrink-0">
                             Verified
                           </span>
                         )}
                         {profile.verification_status === 'pending' && (
-                          <span className="bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px] font-bold px-2 py-0.2 rounded-full animate-pulse">
+                          <span className="bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[9px] font-bold px-1.5 py-0.2 rounded-full animate-pulse shrink-0">
                             Pending Review
                           </span>
                         )}
                         {profile.verification_status === 'rejected' && (
-                          <span className="bg-rose-500/20 text-rose-400 border border-rose-500/40 text-[10px] font-bold px-2 py-0.2 rounded-full">
+                          <span className="bg-rose-500/20 text-rose-400 border border-rose-500/40 text-[9px] font-bold px-1.5 py-0.2 rounded-full shrink-0">
                             Rejected
                           </span>
                         )}
                         {profile.verification_status === 'unverified' && (
-                          <span className="bg-zinc-800 text-zinc-400 border border-zinc-700 text-[10px] font-bold px-2 py-0.2 rounded-full">
+                          <span className="bg-zinc-800 text-zinc-400 border border-zinc-700 text-[9px] font-bold px-1.5 py-0.2 rounded-full shrink-0">
                             Unverified
                           </span>
                         )}
                         {profile.is_banned && (
-                          <span className="bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded">
+                          <span className="bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded shrink-0">
                             BANNED
                           </span>
                         )}
                       </div>
 
-                      <div className="text-xs text-zinc-400 flex items-center gap-2 sm:gap-3 mt-1 truncate">
-                        <span>{profile.department}</span>
-                        <span>•</span>
-                        <span>Year {profile.year || '1'}</span>
-                        <span>•</span>
-                        <span className="text-zinc-500">{profile.email || 'CSJMU'}</span>
+                      <div className="text-[11px] sm:text-xs text-zinc-400 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 min-w-0">
+                        <span className="truncate max-w-[130px] sm:max-w-none">{profile.department || 'Student'}</span>
+                        <span className="text-zinc-600">•</span>
+                        <span>Yr {profile.year || '1'}</span>
+                        <span className="text-zinc-600">•</span>
+                        <span className="text-zinc-500 truncate max-w-[150px] sm:max-w-none">{profile.email || 'CSJMU'}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 self-end sm:self-center">
+                  {/* Actions Row - Full width button grid on mobile, always visible */}
+                  <div className="w-full sm:w-auto pt-2.5 sm:pt-0 border-t border-zinc-800/70 sm:border-0 flex items-center gap-2">
                     {profile.id_card_url ? (
                       <button
                         type="button"
                         onClick={() => setSelectedProfileForReview(profile)}
-                        className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="flex-1 sm:flex-initial py-2 sm:py-1.5 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                       >
-                        <Eye className="w-3.5 h-3.5 text-teal-400" />
-                        <span>Inspect ID</span>
+                        <Eye className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                        <span>Inspect</span>
                       </button>
                     ) : (
-                      <span className="text-[11px] text-zinc-500 italic px-2">No ID image</span>
+                      <span className="text-[11px] text-zinc-500 italic py-1 px-1 flex-1 sm:flex-initial text-center sm:text-left">
+                        No ID uploaded
+                      </span>
                     )}
 
                     {profile.verification_status !== 'verified' && (
                       <button
                         type="button"
                         onClick={() => handleVerificationAction(profile.id, 'verified', profile.full_name)}
-                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center gap-1 shadow-sm cursor-pointer"
+                        className="flex-1 sm:flex-initial py-2 sm:py-1.5 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-sm cursor-pointer"
                         title="Approve ID"
                       >
-                        <Check className="w-3.5 h-3.5" /> Approve
+                        <Check className="w-3.5 h-3.5 shrink-0" />
+                        <span>Approve</span>
                       </button>
                     )}
 
@@ -641,10 +675,11 @@ export default function AdminVerificationsPage() {
                       <button
                         type="button"
                         onClick={() => handleVerificationAction(profile.id, 'rejected', profile.full_name)}
-                        className="px-3.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-bold transition-all flex items-center gap-1 border border-rose-500/30 cursor-pointer"
+                        className="flex-1 sm:flex-initial py-2 sm:py-1.5 px-3.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-bold transition-all flex items-center justify-center gap-1 border border-rose-500/30 cursor-pointer"
                         title="Reject ID"
                       >
-                        <X className="w-3.5 h-3.5" /> Reject
+                        <X className="w-3.5 h-3.5 shrink-0" />
+                        <span>Reject</span>
                       </button>
                     )}
                   </div>
@@ -658,32 +693,35 @@ export default function AdminVerificationsPage() {
       {/* TAB 2: USER REPORTS ("WHO REPORTED WHOM") */}
       {activeTab === 'reports' && (
         <div className="space-y-4">
-          {/* Filter & Search */}
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
+          {/* Filter & Search - Responsive Grid on Mobile */}
+          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+            <div className="grid grid-cols-4 gap-1.5 w-full sm:w-auto sm:flex sm:items-center">
               <button
+                type="button"
                 onClick={() => setReportFilter('all')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer ${
                   reportFilter === 'all'
                     ? 'bg-purple-600 text-white shadow-glow-purple'
                     : 'bg-zinc-800 text-zinc-400 hover:text-white'
                 }`}
               >
-                All Reports ({reports.length})
+                All ({reports.length})
               </button>
               <button
+                type="button"
                 onClick={() => setReportFilter('pending')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer ${
                   reportFilter === 'pending'
                     ? 'bg-rose-500 text-white font-bold'
                     : 'bg-zinc-800 text-zinc-400 hover:text-white'
                 }`}
               >
-                Pending Review ({pendingReportsCount})
+                Pending ({pendingReportsCount})
               </button>
               <button
+                type="button"
                 onClick={() => setReportFilter('resolved')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer ${
                   reportFilter === 'resolved'
                     ? 'bg-teal-500 text-zinc-950 font-bold'
                     : 'bg-zinc-800 text-zinc-400 hover:text-white'
@@ -692,8 +730,9 @@ export default function AdminVerificationsPage() {
                 Resolved ({reports.filter((r) => r.status === 'resolved').length})
               </button>
               <button
+                type="button"
                 onClick={() => setReportFilter('dismissed')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer ${
                   reportFilter === 'dismissed'
                     ? 'bg-zinc-700 text-white font-bold'
                     : 'bg-zinc-800 text-zinc-400 hover:text-white'
@@ -709,17 +748,17 @@ export default function AdminVerificationsPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search reporter, reported, or reason..."
+                placeholder="Search reporter, reported, reason..."
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-purple-500"
               />
             </div>
           </div>
 
           {/* Reports Feed */}
-          <div className="space-y-3.5">
+          <div className="space-y-3 sm:space-y-4">
             {filteredReportsList.length === 0 ? (
-              <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-12 text-center text-zinc-500 text-xs">
-                <Flag className="w-10 h-10 mx-auto mb-2 text-zinc-700" />
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl sm:rounded-3xl p-10 text-center text-zinc-500 text-xs">
+                <Flag className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 text-zinc-700" />
                 <p className="font-bold text-zinc-400">No reports found.</p>
                 <p className="text-[11px] text-zinc-600 mt-1">Student misconduct and message reports will appear here.</p>
               </div>
@@ -732,43 +771,43 @@ export default function AdminVerificationsPage() {
                 return (
                   <div
                     key={report.id}
-                    className="bg-zinc-900/70 border border-zinc-800 rounded-3xl p-4 sm:p-5 space-y-4 hover:border-zinc-700 transition-colors shadow-xl"
+                    className="bg-zinc-900/70 border border-zinc-800 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 space-y-3.5 hover:border-zinc-700 transition-colors shadow-xl w-full overflow-hidden"
                   >
                     {/* Header with Status & Timestamp */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800/80 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 font-bold text-xs border border-rose-500/30 flex items-center gap-1.5">
-                          <Flag className="w-3.5 h-3.5 text-rose-400" />
-                          {report.reason}
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800/80 pb-2.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-bold text-[11px] sm:text-xs border border-rose-500/30 flex items-center gap-1 shrink-0">
+                          <Flag className="w-3 h-3 text-rose-400 shrink-0" />
+                          <span className="truncate max-w-[200px]">{report.reason}</span>
                         </span>
 
                         {report.status === 'pending' && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold text-[11px] border border-amber-500/40">
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold text-[10px] sm:text-[11px] border border-amber-500/40 shrink-0">
                             Pending Review
                           </span>
                         )}
                         {report.status === 'resolved' && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-semibold text-[11px] border border-teal-500/40">
+                          <span className="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 font-semibold text-[10px] sm:text-[11px] border border-teal-500/40 shrink-0">
                             Resolved
                           </span>
                         )}
                         {report.status === 'dismissed' && (
-                          <span className="px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400 font-semibold text-[11px] border border-zinc-700">
+                          <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 font-semibold text-[10px] sm:text-[11px] border border-zinc-700 shrink-0">
                             Dismissed
                           </span>
                         )}
                       </div>
 
-                      <span className="text-zinc-500 text-[11px]">
-                        {new Date(report.created_at).toLocaleString()}
+                      <span className="text-zinc-500 text-[10px] sm:text-[11px]">
+                        {new Date(report.created_at).toLocaleDateString()}
                       </span>
                     </div>
 
-                    {/* WHO REPORTED WHOM VISUAL CARDS */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-center">
+                    {/* WHO REPORTED WHOM VISUAL CARDS - Stacked cleanly on mobile */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3.5 items-stretch">
                       {/* Left: Reporter */}
-                      <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-2xl p-3.5 flex items-center gap-3">
-                        <div className="relative w-11 h-11 rounded-xl bg-zinc-800 overflow-hidden flex items-center justify-center font-bold text-xs shrink-0">
+                      <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-2xl p-3 flex items-center gap-3 min-w-0 overflow-hidden">
+                        <div className="relative w-10 h-10 rounded-xl bg-zinc-800 overflow-hidden flex items-center justify-center font-bold text-xs shrink-0">
                           {reporter?.avatar_url ? (
                             <Image src={reporter.avatar_url} alt="Reporter" fill className="object-cover" unoptimized />
                           ) : (
@@ -789,16 +828,16 @@ export default function AdminVerificationsPage() {
                       </div>
 
                       {/* Right: Target Reported Student */}
-                      <div className="bg-zinc-950/60 border border-rose-950/50 rounded-2xl p-3.5 flex items-center justify-between gap-3 relative">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="relative w-11 h-11 rounded-xl bg-zinc-800 overflow-hidden flex items-center justify-center font-bold text-xs shrink-0">
+                      <div className="bg-zinc-950/60 border border-rose-950/50 rounded-2xl p-3 flex items-center justify-between gap-2.5 relative min-w-0 overflow-hidden">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="relative w-10 h-10 rounded-xl bg-zinc-800 overflow-hidden flex items-center justify-center font-bold text-xs shrink-0">
                             {reported?.avatar_url ? (
                               <Image src={reported.avatar_url} alt="Reported" fill className="object-cover" unoptimized />
                             ) : (
                               <span>{(reported?.full_name || 'U').charAt(0).toUpperCase()}</span>
                             )}
                             {isReportedBanned && (
-                              <div className="absolute inset-0 bg-rose-950/80 flex items-center justify-center text-[9px] text-white font-black">
+                              <div className="absolute inset-0 bg-rose-950/80 flex items-center justify-center text-[8px] text-white font-black">
                                 BAN
                               </div>
                             )}
@@ -808,9 +847,9 @@ export default function AdminVerificationsPage() {
                               Reported User (Target)
                             </span>
                             <h4 className="font-bold text-white text-xs truncate flex items-center gap-1.5">
-                              {reported?.full_name || 'Unknown Student'}
+                              <span className="truncate">{reported?.full_name || 'Unknown Student'}</span>
                               {isReportedBanned && (
-                                <span className="text-[9px] bg-rose-600 text-white px-1 rounded">BANNED</span>
+                                <span className="text-[8px] bg-rose-600 text-white px-1 rounded shrink-0">BANNED</span>
                               )}
                             </h4>
                             <p className="text-[11px] text-zinc-400 truncate">
@@ -822,7 +861,7 @@ export default function AdminVerificationsPage() {
                         {reported && (
                           <Link
                             href={`/profile/${reported.id}`}
-                            className="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0"
+                            className="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors shrink-0 cursor-pointer"
                             title="View Profile"
                           >
                             <ArrowRight className="w-4 h-4" />
@@ -832,18 +871,18 @@ export default function AdminVerificationsPage() {
                     </div>
 
                     {/* Report Reason & Evidence Statement Box */}
-                    <div className="bg-zinc-950/70 rounded-2xl p-3.5 sm:p-4 border border-zinc-800/80 space-y-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Report Reason:</span>
-                        <span className="px-2.5 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 font-extrabold text-xs border border-rose-500/40">
+                    <div className="bg-zinc-950/70 rounded-2xl p-3 sm:p-4 border border-zinc-800/80 space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Report Reason:</span>
+                        <span className="px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 font-extrabold text-[11px] sm:text-xs border border-rose-500/40">
                           {report.reason || 'Misconduct / Community Violation'}
                         </span>
                       </div>
 
                       {report.details ? (
                         <div className="text-xs text-zinc-300 pt-2 border-t border-zinc-800/70">
-                          <span className="font-semibold text-zinc-400 block mb-1">Reporter&apos;s Statement &amp; Context:</span>
-                          <p className="italic text-zinc-200 bg-zinc-900/90 p-3 rounded-xl border border-zinc-800 leading-relaxed">
+                          <span className="font-semibold text-zinc-400 block mb-1 text-[11px]">Reporter&apos;s Statement &amp; Context:</span>
+                          <p className="italic text-zinc-200 bg-zinc-900/90 p-2.5 sm:p-3 rounded-xl border border-zinc-800 leading-relaxed text-xs break-words">
                             &ldquo;{report.details}&rdquo;
                           </p>
                         </div>
@@ -852,50 +891,56 @@ export default function AdminVerificationsPage() {
                       )}
                     </div>
 
-                    {/* Admin Actions Bar */}
-                    <div className="flex flex-wrap items-center justify-end gap-2 pt-1 border-t border-zinc-800/60">
-                      {reported && (
-                        isReportedBanned ? (
+                    {/* Admin Actions Bar - Mobile Grid, Always Visible */}
+                    <div className="w-full pt-2.5 border-t border-zinc-800/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
+                      <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto sm:ml-auto">
+                        {reported && (
+                          isReportedBanned ? (
+                            <button
+                              type="button"
+                              onClick={() => handleUnban(reported as Profile)}
+                              className="py-2 px-3 rounded-xl bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/30 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <UserCheck className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                              <span className="truncate">Unban {(reported.full_name || 'User').split(' ')[0]}</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setBanningUser(reported as Profile);
+                                setBanReasonInput(`Reported for: ${report.reason}. ${report.details || ''}`);
+                              }}
+                              className="py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <UserX className="w-3.5 h-3.5 shrink-0" />
+                              <span className="truncate">Ban {(reported.full_name || 'User').split(' ')[0]}</span>
+                            </button>
+                          )
+                        )}
+
+                        {report.status !== 'resolved' && (
                           <button
                             type="button"
-                            onClick={() => handleUnban(reported as Profile)}
-                            className="px-3.5 py-1.5 rounded-xl bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/30 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                            onClick={() => handleReportStatusChange(report.id, 'resolved', reported?.full_name || 'student')}
+                            className="py-2 px-3 rounded-xl bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
                           >
-                            <UserCheck className="w-3.5 h-3.5 text-teal-400" /> Unban {(reported.full_name || 'User').split(' ')[0]}
+                            <Check className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                            <span>Resolve</span>
                           </button>
-                        ) : (
+                        )}
+
+                        {report.status !== 'dismissed' && (
                           <button
                             type="button"
-                            onClick={() => {
-                              setBanningUser(reported as Profile);
-                              setBanReasonInput(`Reported for: ${report.reason}. ${report.details || ''}`);
-                            }}
-                            className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                            onClick={() => handleReportStatusChange(report.id, 'dismissed', reported?.full_name || 'student')}
+                            className="col-span-2 sm:col-span-1 py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
                           >
-                            <UserX className="w-3.5 h-3.5" /> Ban {(reported.full_name || 'User').split(' ')[0]}
+                            <X className="w-3.5 h-3.5 shrink-0" />
+                            <span>Dismiss</span>
                           </button>
-                        )
-                      )}
-
-                      {report.status !== 'resolved' && (
-                        <button
-                          type="button"
-                          onClick={() => handleReportStatusChange(report.id, 'resolved', reported?.full_name || 'student')}
-                          className="px-3.5 py-1.5 rounded-xl bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/30 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Check className="w-3.5 h-3.5 text-teal-400" /> Mark Resolved
-                        </button>
-                      )}
-
-                      {report.status !== 'dismissed' && (
-                        <button
-                          type="button"
-                          onClick={() => handleReportStatusChange(report.id, 'dismissed', reported?.full_name || 'student')}
-                          className="px-3.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <X className="w-3.5 h-3.5" /> Dismiss
-                        </button>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -908,32 +953,35 @@ export default function AdminVerificationsPage() {
       {/* TAB 3: STUDENT BAN & USER MANAGEMENT */}
       {activeTab === 'users' && (
         <div className="space-y-4">
-          {/* Filter & Search */}
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+          {/* Filter & Search - Responsive Grid on Mobile */}
+          <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+            <div className="grid grid-cols-3 gap-1.5 w-full sm:w-auto sm:flex sm:items-center">
               <button
+                type="button"
                 onClick={() => setUserFilter('all')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer ${
                   userFilter === 'all'
                     ? 'bg-purple-600 text-white shadow-glow-purple'
                     : 'bg-zinc-800 text-zinc-400 hover:text-white'
                 }`}
               >
-                All Students ({profiles.length})
+                All ({profiles.length})
               </button>
               <button
+                type="button"
                 onClick={() => setUserFilter('banned')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer ${
                   userFilter === 'banned'
                     ? 'bg-rose-500 text-white font-bold'
                     : 'bg-zinc-800 text-zinc-400 hover:text-white'
                 }`}
               >
-                Banned / Suspended ({bannedCount})
+                Banned ({bannedCount})
               </button>
               <button
+                type="button"
                 onClick={() => setUserFilter('active')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 ${
+                className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-semibold text-center transition-all cursor-pointer ${
                   userFilter === 'active'
                     ? 'bg-teal-500 text-zinc-950 font-bold'
                     : 'bg-zinc-800 text-zinc-400 hover:text-white'
@@ -955,74 +1003,74 @@ export default function AdminVerificationsPage() {
             </div>
           </div>
 
-          {/* Student Directory Table */}
-          <div className="bg-zinc-900/70 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl divide-y divide-zinc-800/80">
+          {/* Student Directory Table - Mobile Friendly Card list */}
+          <div className="bg-zinc-900/70 border border-zinc-800 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl divide-y divide-zinc-800/80">
             {filteredUsersList.length === 0 ? (
-              <div className="p-12 text-center text-zinc-500 text-xs">
+              <div className="p-10 text-center text-zinc-500 text-xs">
                 No students match your filter.
               </div>
             ) : (
               filteredUsersList.map((user) => (
                 <div
                   key={user.id}
-                  className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-zinc-800/40 transition-colors"
+                  className="p-3.5 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 hover:bg-zinc-800/30 transition-colors w-full"
                 >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-zinc-700/80 shrink-0 overflow-hidden flex items-center justify-center font-bold text-xs relative">
+                  <div className="flex items-start sm:items-center gap-3 w-full sm:w-auto min-w-0 flex-1">
+                    <div className="w-11 h-11 rounded-2xl bg-zinc-800 border border-zinc-700/80 shrink-0 overflow-hidden flex items-center justify-center font-bold text-xs relative">
                       {user.avatar_url ? (
                         <Image src={user.avatar_url} alt={user.full_name || 'Student'} fill className="object-cover" unoptimized />
                       ) : (
                         <span>{(user.full_name || 'U').charAt(0).toUpperCase()}</span>
                       )}
                       {user.is_banned && (
-                        <div className="absolute inset-0 bg-rose-950/80 flex items-center justify-center text-[9px] text-white font-black">
+                        <div className="absolute inset-0 bg-rose-950/80 flex items-center justify-center text-[8px] text-white font-black">
                           BAN
                         </div>
                       )}
                     </div>
 
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-white text-sm truncate">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="font-bold text-white text-xs sm:text-sm truncate max-w-[180px] sm:max-w-none">
                           {user.full_name || 'CSJMU Student'}
                         </h3>
                         {user.is_banned ? (
-                          <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold px-2 py-0.2 rounded-full">
-                            Banned / Suspended
+                          <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px] font-bold px-1.5 py-0.2 rounded-full shrink-0">
+                            Banned
                           </span>
                         ) : (
-                          <span className="bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[10px] font-bold px-2 py-0.2 rounded-full">
-                            Active Account
+                          <span className="bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[9px] font-bold px-1.5 py-0.2 rounded-full shrink-0">
+                            Active
                           </span>
                         )}
                         {user.verification_status === 'verified' && (
-                          <span className="bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[10px] font-bold px-2 py-0.2 rounded-full">
+                          <span className="bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[9px] font-bold px-1.5 py-0.2 rounded-full shrink-0">
                             Verified
                           </span>
                         )}
                       </div>
 
-                      <div className="text-xs text-zinc-400 flex items-center gap-2 sm:gap-3 mt-1 truncate">
-                        <span>{user.department || 'Student'}</span>
-                        <span>•</span>
-                        <span>Year {user.year || '1'}</span>
-                        <span>•</span>
-                        <span className="text-zinc-500">{user.email || 'CSJMU'}</span>
+                      <div className="text-[11px] sm:text-xs text-zinc-400 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 min-w-0">
+                        <span className="truncate max-w-[130px] sm:max-w-none">{user.department || 'Student'}</span>
+                        <span className="text-zinc-600">•</span>
+                        <span>Yr {user.year || '1'}</span>
+                        <span className="text-zinc-600">•</span>
+                        <span className="text-zinc-500 truncate max-w-[150px] sm:max-w-none">{user.email || 'CSJMU'}</span>
                       </div>
 
                       {user.is_banned && user.ban_reason && (
-                        <p className="text-[11px] text-rose-400/90 mt-1 italic">
+                        <p className="text-[11px] text-rose-400/90 mt-1 italic break-words">
                           Ban reason: {user.ban_reason}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  {/* Actions: Ban / Unban & View */}
-                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                  {/* Actions: Ban / Unban & View Profile - Full Width on Mobile */}
+                  <div className="w-full sm:w-auto pt-2.5 sm:pt-0 border-t border-zinc-800/70 sm:border-0 flex items-center gap-2">
                     <Link
                       href={`/profile/${user.id}`}
-                      className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold transition-colors"
+                      className="flex-1 sm:flex-initial py-2 sm:py-1.5 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold transition-colors text-center justify-center flex items-center"
                     >
                       View Profile
                     </Link>
@@ -1031,17 +1079,19 @@ export default function AdminVerificationsPage() {
                       <button
                         type="button"
                         onClick={() => handleUnban(user)}
-                        className="px-4 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                        className="flex-1 sm:flex-initial py-2 sm:py-1.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
                       >
-                        <UserCheck className="w-3.5 h-3.5" /> Unban Student
+                        <UserCheck className="w-3.5 h-3.5 shrink-0" />
+                        <span>Unban</span>
                       </button>
                     ) : (
                       <button
                         type="button"
                         onClick={() => setBanningUser(user)}
-                        className="px-4 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                        className="flex-1 sm:flex-initial py-2 sm:py-1.5 px-4 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <UserX className="w-3.5 h-3.5" /> Ban Student
+                        <UserX className="w-3.5 h-3.5 shrink-0" />
+                        <span>Ban</span>
                       </button>
                     )}
                   </div>
